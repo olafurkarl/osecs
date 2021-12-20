@@ -1,0 +1,44 @@
+// tsconfig.json
+{
+    "compilerOptions": {
+      "experimentalDecorators": true,
+      "target": "esnext",
+      "module": "commonjs",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "noImplicitAny": true,
+      "noImplicitOverride": true,
+      "outDir": "dist",
+      "moduleResolution": "node",
+      "lib": [
+        "esnext",
+        "esnext.asynciterable",
+        "dom"
+      ],
+      "allowJs": true,
+      "sourceMap": true,
+      "baseUrl": "",
+      "paths": {
+        "~/*": [
+          "*"
+        ],
+        "@/*": [
+          "*"
+        ]
+      },
+      "types": [
+        "@types/node",
+        "@types/jest"
+      ],
+      "isolatedModules": true
+    },
+    "exclude": [
+      "node_modules"
+    ],
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "display": "Recommended"
+  }
+  
+  
