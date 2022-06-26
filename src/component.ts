@@ -2,19 +2,30 @@
 import { Entity } from './entity';
 import { v4 as uuidv4 } from 'uuid';
 
-export type ComponentId = string;
+export type ComponentId = number;
+export type ComponentInstanceId = string;
 export type ComponentName = string;
 /**
  * Component that can be attached to entities.
  */
 export abstract class Component {
-    static ComponentMaskMap: Record<string, number> = {};
+    // Map to get component prototype id by component name
+    static ComponentIdMap: Record<ComponentName, ComponentId> = {};
 
+    // Higher current component prototype id
+    static maxId = 0;
+
+    // Prototype id for this component class, set in decorator.
+    declare componentId: ComponentId;
+
+    // Entity that this component is attached to
     private declare entity: Entity;
-    private id: ComponentId;
+
+    // Id for this component instance.
+    private instanceId: ComponentInstanceId;
 
     constructor() {
-        this.id = uuidv4();
+        this.instanceId = uuidv4();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types
@@ -23,8 +34,8 @@ export abstract class Component {
         return;
     }
 
-    getId(): ComponentId {
-        return this.id;
+    getId(): ComponentInstanceId {
+        return this.instanceId;
     }
 
     setEntity(entity: Entity): void {
@@ -43,19 +54,14 @@ export abstract class Component {
     public onComponentRemoved: () => void = () => {
         // no-op
     };
-
-    getMask = (): number => {
-        return Component.ComponentMaskMap[this.constructor.name];
-    };
 }
 
 export function RegisterComponent<
     T extends { new (...args: any[]): Component }
 >(constructor: T): any {
-    const keyName = constructor.name;
-    // At some point we might have more than 53 components, in which case we need to be more clever
-    // about how we deal with our masks since MAX_SAFE_INTEGER in JS is 2^53
-    const componentMaskShift = Object.keys(Component.ComponentMaskMap).length;
-    const componentMask = 1 << componentMaskShift;
-    Component.ComponentMaskMap[keyName] = componentMask;
+    Component.maxId++;
+    const newComponentId = Component.maxId;
+    constructor.prototype.componentId = newComponentId;
+
+    Component.ComponentIdMap[constructor.name] = newComponentId;
 }

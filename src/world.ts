@@ -1,6 +1,7 @@
 import { System } from './system';
 import { Entity, EntityBuilder } from './entity';
 import { ParentHasAspect } from './aspect';
+import { Query } from './query';
 
 class WorldBuilder {
     private world: World;
@@ -36,44 +37,47 @@ type ComponentName = string;
 
 export class World {
     private systems: System[] = [];
-    private aspectRegistry: Map<ComponentName, System[]> = new Map();
-    private parentAspectRegistry: Map<ComponentName, System[]> = new Map();
+    private queryRegistry: Map<ComponentName, Query[]> = new Map();
+    private parentQueryRegistry: Map<ComponentName, Query[]> = new Map();
 
     static create(): WorldBuilder {
         return new WorldBuilder();
     }
 
     /**
-     * Keeping track of which systems are interested in which components,
+     * Keeping track of which queries are interested in which components,
      * in order to reduce the amount of iterations when updating entity lists
      */
     addToAspectRegistry(
         key: ComponentName,
-        system: System,
-        registry: Map<ComponentName, System[]>
+        query: Query,
+        registry: Map<ComponentName, Query[]>
     ): void {
         if (!registry.has(key)) {
-            registry.set(key, [system]);
+            registry.set(key, [query]);
         } else {
-            registry.get(key)?.push(system);
+            registry.get(key)?.push(query);
         }
     }
 
     mapAspects(system: System): void {
-        system.aspects().forEach((a) => {
-            if (a instanceof ParentHasAspect) {
-                this.addToAspectRegistry(
-                    a.componentName,
-                    system,
-                    this.parentAspectRegistry
-                );
-            } else {
-                this.addToAspectRegistry(
-                    a.componentName,
-                    system,
-                    this.aspectRegistry
-                );
-            }
+        system.queries.forEach((query: Query) => {
+            const aspects = query.aspects;
+            aspects.forEach((a) => {
+                if (a instanceof ParentHasAspect) {
+                    this.addToAspectRegistry(
+                        a.componentName,
+                        query,
+                        this.parentQueryRegistry
+                    );
+                } else {
+                    this.addToAspectRegistry(
+                        a.componentName,
+                        query,
+                        this.queryRegistry
+                    );
+                }
+            });
         });
     }
 
@@ -88,53 +92,39 @@ export class World {
         });
     };
 
-    checkIncludeMask = (entity: Entity, s: System): boolean =>
-        s.getIncludeMask() !== 0 &&
-        checkMask(s.getIncludeMask(), entity.getComponentMask());
-
-    checkExcludeMask = (entity: Entity, s: System): boolean =>
-        checkMask(entity.getComponentMask(), s.getExcludeMask());
-
-    checkParentMask = (entity: Entity, s: System): boolean =>
-        s.getParentIncludeMask() !== 0 &&
-        checkMask(s.getParentIncludeMask(), entity.getComponentMask());
-
     updateRegistry(componentName: string, entity: Entity): void {
         /**
          * TODO:
-         * This actually has the potential to iterate through the same system multiple times
-         * It should be possible to narrow it down so that we only check each system once?
+         * This actually has the potential to iterate through the same query multiple times
+         * It should be possible to narrow it down so that we only check each query once?
          */
-        this.aspectRegistry.get(componentName)?.forEach((system) => {
-            const doesInclude = this.checkIncludeMask(entity, system);
-            const doesntExclude = this.checkExcludeMask(entity, system);
+        this.queryRegistry.get(componentName)?.forEach((query) => {
+            const registerThisEntity = query.shouldRegisterEntity(entity);
 
-            const registerThisEntity = doesInclude && doesntExclude;
-
-            if (system.hasEntity(entity) && !registerThisEntity) {
-                system.unregisterEntity(entity);
+            if (query.hasEntity(entity) && !registerThisEntity) {
+                query.unregisterEntity(entity);
             } else if (registerThisEntity) {
-                system.registerEntity(entity);
+                query.registerEntity(entity);
             }
         });
     }
 
-    updateParentRegistry(componentName: string, entity: Entity): void {
+    updateParentRegistry(
+        componentName: string,
+        parentEnt: Entity,
+        childEnt: Entity
+    ): void {
         /**
          * TODO:
-         * This actually has the potential to iterate through the same system multiple times
-         * It should be possible to narrow it down so that we only check each system once?
+         * This actually has the potential to iterate through the same query multiple times
+         * It should be possible to narrow it down so that we only check each query once?
          */
-        this.parentAspectRegistry.get(componentName)?.forEach((system) => {
-            const doesParentInclude = this.checkParentMask(entity, system);
-            if (doesParentInclude) {
-                entity.getChildren().forEach((c) => {
-                    system.registerEntity(c);
-                });
+        this.parentQueryRegistry.get(componentName)?.forEach((query) => {
+            const registerThisEntity = query.shouldRegisterEntity(childEnt);
+            if (registerThisEntity) {
+                query.registerEntity(childEnt);
             } else {
-                entity.getChildren().forEach((c) => {
-                    system.unregisterEntity(c);
-                });
+                query.unregisterEntity(childEnt);
             }
         });
     }
@@ -154,13 +144,3 @@ export class World {
         )[0] as InstanceType<T>;
     }
 }
-
-/**
- *
- * @param mask1 The mask that needs to be met to fulfill the condition
- * @param mask2 The other mask that needs to match up with the first mask
- * @returns Whether the masks match or not
- */
-const checkMask = (mask1: number, mask2: number): boolean => {
-    return (mask1 & mask2) == mask1;
-};

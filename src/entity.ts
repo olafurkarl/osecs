@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
 import { Component, ComponentName } from './component';
-import { System, SystemId } from './system';
+import { Mask } from './mask';
+import { Query, QueryId } from './query';
 import { World } from './world';
 
 export type EntityId = string;
@@ -13,20 +14,21 @@ export class Entity {
     public id: EntityId;
     public name = 'unknown';
 
-    private parent: Entity | undefined;
+    private _parent: Entity | undefined;
     private world: World;
-    private componentMask = 0;
+    private _componentMask: Mask;
     private cleanupCallbacks: { (): void }[] = [];
 
     private components: Map<ComponentName, Component>;
     private children: Map<EntityId, Entity>;
-    private currentSystems = new Map<SystemId, System>();
+    private currentQueries = new Map<QueryId, Query>();
 
     constructor(world: World, name?: string) {
         this.id = uuidv4().split('-')[0];
         this.components = new Map<EntityId, Component>();
         this.world = world;
         this.children = new Map<EntityId, Entity>();
+        this._componentMask = new Mask();
         if (name) {
             this.name = name;
         }
@@ -39,8 +41,7 @@ export class Entity {
         component.setValues(...args);
 
         this.components.set(component.constructor.name, component);
-        this.componentMask |=
-            Component.ComponentMaskMap[component.constructor.name];
+        this._componentMask.flipOn(component.componentId - 1);
 
         this.world.updateRegistry(component.constructor.name, this);
     }
@@ -66,8 +67,8 @@ export class Entity {
     ): InstanceType<T> {
         let component = this.getComponent(componentClass);
 
-        if (!component && this.parent) {
-            component = this.parent.getOrInheritComponent(componentClass);
+        if (!component && this._parent) {
+            component = this._parent.getOrInheritComponent(componentClass);
         }
         if (!component) {
             throw new Error(
@@ -87,8 +88,8 @@ export class Entity {
         return Array.from(this.components.keys());
     }
 
-    getComponentMask(): number {
-        return this.componentMask;
+    get componentMask(): Mask {
+        return this._componentMask;
     }
 
     hasComponent<T extends { new (...args: never): Component }>(
@@ -108,7 +109,9 @@ export class Entity {
 
     removeComponentByName(componentName: ComponentName): void {
         if (this.components.has(componentName)) {
-            this.componentMask &= ~Component.ComponentMaskMap[componentName];
+            this._componentMask.flipOff(
+                Component.ComponentIdMap[componentName] - 1
+            );
 
             this.components.get(componentName)?.onComponentRemoved();
             this.components.delete(componentName);
@@ -120,20 +123,20 @@ export class Entity {
         return this.id === other.id;
     }
 
-    registerSystem(system: System): void {
-        this.currentSystems.set(system.id, system);
+    registerQuery(query: Query): void {
+        this.currentQueries.set(query.id, query);
     }
 
-    unregisterSystem(system: System): void {
-        this.currentSystems.delete(system.id);
+    unregisterQuery(query: Query): void {
+        this.currentQueries.delete(query.id);
     }
 
     addChild(entity: Entity): void {
         this.children.set(entity.id, entity);
-        entity.parent = this;
+        entity._parent = this;
 
-        entity.getComponentNames().forEach((cn) => {
-            this.world.updateParentRegistry(cn, this);
+        this.getComponentNames().forEach((cn) => {
+            this.world.updateParentRegistry(cn, this, entity);
         });
     }
 
@@ -153,13 +156,17 @@ export class Entity {
         );
     }
 
-    getParent(): Entity {
-        if (!this.parent) {
+    hasParent(): boolean {
+        return !!this._parent;
+    }
+
+    get parent(): Entity {
+        if (!this._parent) {
             throw new Error(
                 "Entity tried to fetch it's parent entity, but none was found"
             );
         }
-        return this.parent;
+        return this._parent;
     }
 
     addCleanupCallback(callback: () => void): void {
@@ -168,8 +175,8 @@ export class Entity {
 
     destroy(): void {
         // use maintained list of registered systems and unregister entity
-        this.currentSystems.forEach((s) => {
-            s.unregisterEntity(this);
+        this.currentQueries.forEach((q) => {
+            q.unregisterEntity(this);
         });
 
         this.components.forEach((c) => {
@@ -180,8 +187,8 @@ export class Entity {
             cb();
         });
 
-        if (this.parent) {
-            this.parent.removeChild(this);
+        if (this._parent) {
+            this._parent.removeChild(this);
         }
 
         this.children.forEach((c) => c.destroy());
@@ -198,7 +205,6 @@ export class Entity {
 
 export class EntityBuilder {
     private readonly entity: Entity;
-    private componentAddStack: (() => void)[] = [];
 
     static create(world: World, name?: string): EntityBuilder {
         return new EntityBuilder(world, name);
@@ -213,18 +219,15 @@ export class EntityBuilder {
         ...args: Parameters<T['setValues']>
     ): EntityBuilder {
         component.setEntity(this.entity);
-        this.componentAddStack.push(() => {
-            this.entity.addComponent(component, ...args);
-        });
+        this.entity.addComponent(component, ...args);
         return this;
     }
+
     withChild(entity: Entity): EntityBuilder {
         this.entity.addChild(entity);
         return this;
     }
     build(): Entity {
-        // We need our child components to be initialized before calling 'addComponent'
-        this.componentAddStack.forEach((f) => f());
         return this.entity;
     }
 }

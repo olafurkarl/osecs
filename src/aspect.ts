@@ -1,12 +1,12 @@
 import { Component } from './component';
 
 export class Aspect {
-    public mask: number;
+    public bitFlag: number;
     public componentName: string;
 
     constructor(component: { new (...args: never): Component }) {
         this.componentName = component.name;
-        this.mask = Component.ComponentMaskMap[component.name];
+        this.bitFlag = Component.ComponentIdMap[component.name] - 1;
     }
 }
 

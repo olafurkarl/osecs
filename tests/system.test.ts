@@ -1,5 +1,6 @@
 import {
     Component,
+    Entity,
     EntityBuilder,
     Has,
     RegisterComponent,
@@ -25,12 +26,10 @@ class BTestComponent extends Component {
 }
 
 class SpawnB extends System {
-    aspects() {
-        return [Has(ATestComponent)];
-    }
+    private ents = this.query([Has(ATestComponent)]);
 
     run() {
-        this.entities.forEach((e) => {
+        this.ents.forEach((e: Entity) => {
             const value = e.getComponent(ATestComponent).value;
             EntityBuilder.create(this.world)
                 .withComponent(new BTestComponent(), { value })
@@ -43,21 +42,16 @@ class SpawnB extends System {
 }
 
 class KillB extends System {
-    aspects() {
-        return [Has(BTestComponent)];
-    }
-    excludes() {
-        return [];
-    }
+    private ents = this.query([Has(BTestComponent)]);
 
     run() {
-        this.entities.forEach((entity) => {
+        this.ents.forEach((entity) => {
             entity.destroy();
         });
     }
 
     public getEntities = () => {
-        return Array.from(this.entities.values());
+        return Array.from(this.ents.entities.values());
     };
 }
 
