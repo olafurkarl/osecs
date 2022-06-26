@@ -155,7 +155,7 @@ describe('Masking', () => {
 
         expect(entity.getComponentMask()).toEqual(0b11);
 
-        entity._destroy();
+        entity.destroy();
 
         world.run(1);
 

@@ -1,12 +1,5 @@
-import { EventEmitter } from 'events';
 import { System } from './system';
 import { Entity } from './entity';
-
-interface EntityCleanupRecord {
-    entity: Entity;
-    componentName: string;
-    onRemove: () => void;
-}
 
 class WorldBuilder {
     private world: World;
@@ -111,20 +104,6 @@ export class World {
         });
     }
 
-    syncRemoved = (
-        system: System,
-        { entity, componentName, onRemove }: EntityCleanupRecord
-    ): void => {
-        onRemove();
-        if (
-            !checkMask(system.getAspectMask(), entity.getComponentMask()) &&
-            system.hasEntity(entity) &&
-            system.hasAspect(componentName)
-        ) {
-            system.unregisterEntity(entity);
-        }
-    };
-
     /**
      * Used for testing
      */
@@ -136,8 +115,6 @@ export class World {
         )[0] as InstanceType<T>;
     }
 }
-
-export const SystemEvents = new EventEmitter();
 
 /**
  *

@@ -1,4 +1,4 @@
-import { Component, ComponentMaskMap } from './component';
+import { Component } from './component';
 import { Entity } from './entity';
 import { World } from './world';
 import { v4 as uuidv4 } from 'uuid';
@@ -95,9 +95,9 @@ export abstract class System {
         return this.excludeMask as number;
     }
 
-    getMask(maskable: unknown[]): number {
+    getMask(maskable: typeof Component[]): number {
         return maskable
-            .map((a: any) => ComponentMaskMap[a.name])
+            .map((a: any) => Component.ComponentMaskMap[a.name])
             .reduce((prev, curr) => prev | curr, 0);
     }
 }

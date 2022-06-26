@@ -8,6 +8,8 @@ export type ComponentName = string;
  * Component that can be attached to entities.
  */
 export abstract class Component {
+    static ComponentMaskMap: Record<string, number> = {};
+
     private declare entity: Entity;
     private id: ComponentId;
 
@@ -43,12 +45,9 @@ export abstract class Component {
     };
 
     getMask = (): number => {
-        return ComponentMaskMap[this.constructor.name];
+        return Component.ComponentMaskMap[this.constructor.name];
     };
 }
-
-// TODO: Move this into World
-export const ComponentMaskMap: Record<string, number> = {};
 
 export function RegisterComponent<
     T extends { new (...args: any[]): Component }
@@ -63,7 +62,7 @@ export function RegisterComponent<
 
     // At some point we might have more than 53 components, in which case we need to be more clever
     // about how we deal with our masks since MAX_SAFE_INTEGER in JS is 2^53
-    const componentMaskShift = Object.keys(ComponentMaskMap).length;
+    const componentMaskShift = Object.keys(Component.ComponentMaskMap).length;
     const componentMask = 1 << componentMaskShift;
-    ComponentMaskMap[keyName] = componentMask;
+    Component.ComponentMaskMap[keyName] = componentMask;
 }

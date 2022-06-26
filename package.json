@@ -15,7 +15,7 @@
   "license": "ISC",
   "exports": {
     ".": "./src/index.ts",
-    "./perf.js": "./dist/index.js"
+    "./perf.js": "./dist/src/index.js"
   },
   "dependencies": {
     "rollup": "^2.61.1",

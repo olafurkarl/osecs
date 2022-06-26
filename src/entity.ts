@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import { Component, ComponentMaskMap, ComponentName } from './component';
+import { Component, ComponentName } from './component';
 import { System, SystemId } from './system';
 import { World } from './world';
 
@@ -39,7 +39,8 @@ export class Entity {
         component.init(...args);
 
         this.components.set(component.constructor.name, component);
-        this.componentMask |= ComponentMaskMap[component.constructor.name];
+        this.componentMask |=
+            Component.ComponentMaskMap[component.constructor.name];
 
         this.world.updateRegistry(component.constructor.name, this);
     }
@@ -96,8 +97,7 @@ export class Entity {
 
     removeComponentByName(componentName: ComponentName): void {
         if (this.components.has(componentName)) {
-            // todo: move this inside world for cohesion
-            this.componentMask &= ~ComponentMaskMap[componentName];
+            this.componentMask &= ~Component.ComponentMaskMap[componentName];
 
             this.components.get(componentName)?.onComponentRemoved();
             this.components.delete(componentName);
