@@ -1,5 +1,6 @@
 import { System } from './system';
 import { Entity, EntityBuilder } from './entity';
+import { ParentHasAspect } from './aspect';
 
 class WorldBuilder {
     private world: World;
@@ -35,7 +36,8 @@ type ComponentName = string;
 
 export class World {
     private systems: System[] = [];
-    private systemComponentMap: Map<ComponentName, System[]> = new Map();
+    private aspectRegistry: Map<ComponentName, System[]> = new Map();
+    private parentAspectRegistry: Map<ComponentName, System[]> = new Map();
 
     static create(): WorldBuilder {
         return new WorldBuilder();
@@ -56,47 +58,95 @@ export class World {
     //     });
     // }
 
-    addToSCMap(key: ComponentName, system: System): void {
-        if (!this.systemComponentMap.has(key)) {
-            this.systemComponentMap.set(key, [system]);
+    addToAspectRegistry(
+        key: ComponentName,
+        system: System,
+        registry: Map<ComponentName, System[]>
+    ): void {
+        if (!registry.has(key)) {
+            registry.set(key, [system]);
         } else {
-            this.systemComponentMap.get(key)?.push(system);
+            registry.get(key)?.push(system);
         }
     }
 
-    mapAspectsAndExcludes(system: System): void {
+    mapAspects(system: System): void {
         system.aspects().forEach((a) => {
-            this.addToSCMap(a.componentName, system);
+            if (a instanceof ParentHasAspect) {
+                this.addToAspectRegistry(
+                    a.componentName,
+                    system,
+                    this.parentAspectRegistry
+                );
+            } else {
+                this.addToAspectRegistry(
+                    a.componentName,
+                    system,
+                    this.aspectRegistry
+                );
+            }
         });
     }
 
     addSystem(system: System): void {
         // this.validateSystem(system);
-        this.mapAspectsAndExcludes(system);
+        this.mapAspects(system);
         this.systems.push(system);
     }
 
-    run = (delta: number): void => {
+    run = (delta = 1): void => {
         this.systems.forEach((system: System) => {
             system.run(delta);
         });
     };
 
-    destroy(entity: Entity): void {
-        entity.destroy();
-    }
-
-    checkAddOrRemove = (entity: Entity, s: System): boolean =>
-        checkMask(entity.getComponentMask(), s.getExcludeMask()) &&
+    checkIncludeMask = (entity: Entity, s: System): boolean =>
+        s.getIncludeMask() !== 0 &&
         checkMask(s.getIncludeMask(), entity.getComponentMask());
 
+    checkExcludeMask = (entity: Entity, s: System): boolean =>
+        checkMask(entity.getComponentMask(), s.getExcludeMask());
+
+    checkParentMask = (entity: Entity, s: System): boolean =>
+        s.getParentIncludeMask() !== 0 &&
+        checkMask(s.getParentIncludeMask(), entity.getComponentMask());
+
     updateRegistry(componentName: string, entity: Entity): void {
-        this.systemComponentMap.get(componentName)?.forEach((system) => {
-            const addOrRemove = this.checkAddOrRemove(entity, system);
-            if (system.hasEntity(entity) && !addOrRemove) {
+        /**
+         * TODO:
+         * This actually has the potential to iterate through the same system multiple times
+         * It should be possible to narrow it down so that we only check each system once?
+         */
+        this.aspectRegistry.get(componentName)?.forEach((system) => {
+            const doesInclude = this.checkIncludeMask(entity, system);
+            const doesntExclude = this.checkExcludeMask(entity, system);
+
+            const registerThisEntity = doesInclude && doesntExclude;
+
+            if (system.hasEntity(entity) && !registerThisEntity) {
                 system.unregisterEntity(entity);
-            } else if (addOrRemove) {
+            } else if (registerThisEntity) {
                 system.registerEntity(entity);
+            }
+        });
+    }
+
+    updateParentRegistry(componentName: string, entity: Entity): void {
+        /**
+         * TODO:
+         * This actually has the potential to iterate through the same system multiple times
+         * It should be possible to narrow it down so that we only check each system once?
+         */
+        this.parentAspectRegistry.get(componentName)?.forEach((system) => {
+            const doesParentInclude = this.checkParentMask(entity, system);
+            if (doesParentInclude) {
+                entity.getChildren().forEach((c) => {
+                    system.registerEntity(c);
+                });
+            } else {
+                entity.getChildren().forEach((c) => {
+                    system.unregisterEntity(c);
+                });
             }
         });
     }

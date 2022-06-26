@@ -130,6 +130,11 @@ export class Entity {
 
     addChild(entity: Entity): void {
         this.children.set(entity.id, entity);
+        entity.parent = this;
+
+        entity.getComponentNames().forEach((cn) => {
+            this.world.updateParentRegistry(cn, this);
+        });
     }
 
     removeChild(entity: Entity): void {
@@ -146,10 +151,6 @@ export class Entity {
         return Array.from(this.children.values()).filter((child) =>
             child.hasComponent(componentClass)
         );
-    }
-
-    setParent(entity: Entity): void {
-        this.parent = entity;
     }
 
     getParent(): Entity {
@@ -197,6 +198,7 @@ export class Entity {
 
 export class EntityBuilder {
     private readonly entity: Entity;
+    private componentAddStack: (() => void)[] = [];
 
     static create(world: World, name?: string): EntityBuilder {
         return new EntityBuilder(world, name);
@@ -211,16 +213,18 @@ export class EntityBuilder {
         ...args: Parameters<T['setValues']>
     ): EntityBuilder {
         component.setEntity(this.entity);
-
-        this.entity.addComponent(component, ...args);
+        this.componentAddStack.push(() => {
+            this.entity.addComponent(component, ...args);
+        });
         return this;
     }
     withChild(entity: Entity): EntityBuilder {
-        entity.setParent(this.entity);
         this.entity.addChild(entity);
         return this;
     }
     build(): Entity {
+        // We need our child components to be initialized before calling 'addComponent'
+        this.componentAddStack.forEach((f) => f());
         return this.entity;
     }
 }
