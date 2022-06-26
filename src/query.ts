@@ -76,6 +76,16 @@ export class Query {
         if (this._parentMask.empty) {
             this._parentMask.flipAllToOne();
         }
+
+        if (
+            !this._parentMask.enabled &&
+            !this._includeMask.enabled &&
+            this._excludeMask.enabled
+        ) {
+            throw new Error(
+                'Query with only Without aspects not supported, add an inclusive aspect to the query.'
+            );
+        }
     }
 
     checkIncludeMask = (entity: Entity): boolean =>

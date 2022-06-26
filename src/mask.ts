@@ -33,7 +33,7 @@ export class Mask {
      */
     public fulfills = (otherMask: Mask): boolean => {
         if (otherMask.mask.length !== this._mask.length) {
-            throw new Error('Comparing masks of different sizes not allowd');
+            throw new Error('Comparing masks of different sizes not allowed');
         }
         return this._mask.every((m, index) =>
             this.checkMask(m, otherMask.mask[index])

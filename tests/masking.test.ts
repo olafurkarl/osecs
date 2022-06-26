@@ -17,6 +17,8 @@ class ATestComponent extends Component {}
 @RegisterComponent
 class BTestComponent extends Component {}
 
+@RegisterComponent
+class CTestComponent extends Component {}
 class TestSystem extends System {
     declare testQuery: Query;
 
@@ -75,9 +77,16 @@ describe('Masking', () => {
     });
 
     it('gets the correct system exclude mask', () => {
-        const testSystem01 = setupSystem([Without(ATestComponent)]);
-        const testSystem10 = setupSystem([Without(BTestComponent)]);
+        const testSystem01 = setupSystem([
+            Has(ATestComponent),
+            Without(ATestComponent)
+        ]);
+        const testSystem10 = setupSystem([
+            Has(ATestComponent),
+            Without(BTestComponent)
+        ]);
         const testSystem11 = setupSystem([
+            Has(CTestComponent),
             Without(ATestComponent),
             Without(BTestComponent)
         ]);
@@ -220,7 +229,10 @@ describe('Masking', () => {
     });
 
     it('excludes entity with no components', () => {
-        const TestSystemA = setupSystemType([Without(ATestComponent)]);
+        const TestSystemA = setupSystemType([
+            Has(CTestComponent),
+            Without(ATestComponent)
+        ]);
         const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world).build();
         world.run();
@@ -228,7 +240,19 @@ describe('Masking', () => {
         expect(testSystemInst.getEntities().length).toEqual(0);
     });
 
-    it('does not include entity with no components', () => {
+    it('exclude query does include entity with required component', () => {
+        const TestSystemA = setupSystemType([
+            Has(CTestComponent),
+            Without(ATestComponent)
+        ]);
+        const world = World.create().withSystem(TestSystemA).build();
+        EntityBuilder.create(world).withComponent(new CTestComponent()).build();
+        world.run();
+        const testSystemInst = world.getSystem(TestSystemA);
+        expect(testSystemInst.getEntities().length).toEqual(1);
+    });
+
+    it('include query does not include entity with no components', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world).build();
