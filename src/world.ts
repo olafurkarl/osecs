@@ -43,6 +43,10 @@ export class World {
         return new WorldBuilder();
     }
 
+    /**
+     * Keeping track of which systems are interested in which components,
+     * in order to reduce the amount of iterations when updating entity lists
+     */
     addToAspectRegistry(
         key: ComponentName,
         system: System,
