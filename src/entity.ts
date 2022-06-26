@@ -69,15 +69,6 @@ export default class Entity extends EventEmitter {
         return this.componentMask;
     }
 
-    // getComponentMask(): number {
-    //     return Object.values(this.components)
-    //         .filter(
-    //             (c): c is Component => !!c && typeof c.getMask === 'function'
-    //         )
-    //         .map((c) => c.getMask())
-    //         .reduce((prev, cur) => prev | cur, 0);
-    // }
-
     hasComponent<T extends { new (...args: never): Component }>(
         componentClass: T | Component
     ): boolean {
@@ -149,11 +140,15 @@ export default class Entity extends EventEmitter {
 
 export class EntityBuilder {
     private readonly entity: Entity;
-    private world: World;
+
+    static create(world: World, name?: string): EntityBuilder {
+        return new EntityBuilder(world, name);
+    }
+
     constructor(world: World, name?: string) {
         this.entity = new Entity(world, name);
-        this.world = world;
     }
+
     withComponent(
         component: Component,
         args?: Object | undefined
@@ -171,6 +166,7 @@ export class EntityBuilder {
         return this;
     }
     build(): Entity {
+        // TODO: Move this to the world's events instead (if we're keeping events)
         SystemEvents.emit(events.ENT_CREATED, this.entity);
         return this.entity;
     }

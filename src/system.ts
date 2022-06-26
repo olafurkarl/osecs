@@ -28,21 +28,40 @@ export default abstract class System {
     abstract run(delta: number): void;
 
     abstract aspects(): unknown[];
+    abstract excludes(): unknown[];
 
     private aspectMask: number | undefined;
+    private excludeMask: number | undefined;
 
     hasAspect(aspect: string): boolean {
-        return this.aspects()
-            .map((a: any) => a.name)
-            .includes(aspect);
+        return this.hasComponent(aspect, this.aspects());
+    }
+
+    hasExclude(exclude: string): boolean {
+        return this.hasComponent(exclude, this.excludes());
+    }
+
+    hasComponent(name: string, array: unknown[]): boolean {
+        return array.map((a: any) => a.name).includes(name);
     }
 
     getAspectMask(): number {
         if (!this.aspectMask) {
-            this.aspectMask = this.aspects()
-                .map((a: any) => ComponentMaskMap[a.name])
-                .reduce((prev, curr) => prev | curr, 0);
+            this.aspectMask = this.getMask(this.aspects());
         }
         return this.aspectMask as number;
+    }
+
+    getExcludeMask(): number {
+        if (!this.excludeMask) {
+            this.excludeMask = ~this.getMask(this.excludes()) >>> 0;
+        }
+        return this.excludeMask as number;
+    }
+
+    getMask(maskable: unknown[]): number {
+        return maskable
+            .map((a: any) => ComponentMaskMap[a.name])
+            .reduce((prev, curr) => prev | curr, 0);
     }
 }

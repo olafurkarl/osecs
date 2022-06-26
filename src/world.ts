@@ -8,23 +8,47 @@ interface EntityCleanupRecord {
     onRemove: () => void;
 }
 
-export class World {
-    private systems: System[] = [];
+class WorldBuilder {
+    private world: World;
 
-    addSystem(system: System): World {
-        this.systems.push(system);
+    constructor() {
+        this.world = new World();
+    }
+
+    static create(): WorldBuilder {
+        return new WorldBuilder();
+    }
+
+    withSystem(system: System): WorldBuilder {
+        this.world.addSystem(system);
         return this;
     }
 
-    addSystems(systems: System[]): World {
+    withSystems(systems: System[]): WorldBuilder {
         systems.forEach((s) => {
-            this.systems.push(s);
+            this.world.addSystem(s);
         });
         return this;
     }
 
+    build(): World {
+        return this.world;
+    }
+}
+
+export class World {
+    private systems: System[] = [];
+
+    static create(): WorldBuilder {
+        return new WorldBuilder();
+    }
+
+    addSystem(system: System): void {
+        this.systems.push(system);
+    }
+
     run = (delta: number): void => {
-        this.cleanup();
+        this.sync();
 
         this.systems.forEach((system: System) => {
             system.run(delta);
@@ -49,21 +73,26 @@ export class World {
         return record.entity.id + record.componentName;
     }
 
-    cleanup(): void {
+    sync(): void {
         this.dirtyAdded.forEach(this.syncAdded);
         this.dirtyAdded = [];
         this.dirtyRemoved.forEach(this.syncRemoved);
         this.dirtyRemoved.clear();
     }
 
+    checkAddOrRemove = (entity: Entity, s: System): boolean =>
+        checkMask(entity.getComponentMask(), s.getExcludeMask()) &&
+        checkMask(s.getAspectMask(), entity.getComponentMask());
+
     syncAdded = (entity: Entity): void => {
-        this.systems
-            .filter((s) =>
-                checkMask(s.getAspectMask(), entity.getComponentMask())
-            )
-            .forEach((s) => {
+        this.systems.forEach((s) => {
+            const addOrRemove = this.checkAddOrRemove(entity, s);
+            if (s.hasEntity(entity) && !addOrRemove) {
+                s.unregisterEntity(entity);
+            } else if (addOrRemove) {
                 s.registerEntity(entity);
-            });
+            }
+        });
     };
 
     syncRemoved = ({

@@ -20,19 +20,11 @@
       "allowJs": true,
       "sourceMap": true,
       "baseUrl": "",
-      "paths": {
-        "~/*": [
-          "*"
-        ],
-        "@/*": [
-          "*"
-        ]
-      },
       "types": [
         "@types/node",
         "@types/jest"
       ],
-      "isolatedModules": true
+      "isolatedModules": false
     },
     "exclude": [
       "node_modules"

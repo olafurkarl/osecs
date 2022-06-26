@@ -45,6 +45,7 @@ export default abstract class Component {
     };
 }
 
+// TODO: Move this into World
 export const ComponentMaskMap: Record<string, number> = {};
 
 export function RegisterComponent<
