@@ -52,14 +52,7 @@ export abstract class Component {
 export function RegisterComponent<
     T extends { new (...args: any[]): Component }
 >(constructor: T): any {
-    const componentSuffix = 'Component';
-    if (!constructor.name.includes(componentSuffix)) {
-        throw new Error(
-            `Illegal name of component class. Component name must end in "${componentSuffix}".`
-        );
-    }
     const keyName = constructor.name;
-
     // At some point we might have more than 53 components, in which case we need to be more clever
     // about how we deal with our masks since MAX_SAFE_INTEGER in JS is 2^53
     const componentMaskShift = Object.keys(Component.ComponentMaskMap).length;

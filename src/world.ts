@@ -43,21 +43,6 @@ export class World {
         return new WorldBuilder();
     }
 
-    // validateSystem(system: System): void {
-    //     system.aspects().forEach((e) => {
-    //         if (
-    //             system
-    //                 .excludes()
-    //                 .map((f) => (f as any).name)
-    //                 .includes((e as any).name)
-    //         ) {
-    //             throw new Error(
-    //                 'System aspects must not contains any of its excludes'
-    //             );
-    //         }
-    //     });
-    // }
-
     addToAspectRegistry(
         key: ComponentName,
         system: System,
@@ -89,7 +74,6 @@ export class World {
     }
 
     addSystem(system: System): void {
-        // this.validateSystem(system);
         this.mapAspects(system);
         this.systems.push(system);
     }
