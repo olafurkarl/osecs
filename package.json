@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com-oli3k:hs4x/hs4x-battle-prototype.git"
+    "url": "git@github.com:olafurkarl/osecs.git"
   },
   "author": "Ólafur Karl Stefánsson",
   "license": "ISC",

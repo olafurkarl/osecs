@@ -1,3 +1,6 @@
+## OSECS
+For now just a hobby project to make some sort of ECS, not very performant.
+
 # Benchmarks 
 | Jan-08-2022 | https://github.com/noctjs/ecs-benchmark  | 
 | ---------------| ------------ |
