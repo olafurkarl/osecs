@@ -120,7 +120,7 @@ describe('Masking', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
+            .withComponent(ATestComponent)
             .build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
@@ -138,8 +138,8 @@ describe('Masking', () => {
 
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
-            .withComponent(new BTestComponent())
+            .withComponent(ATestComponent)
+            .withComponent(BTestComponent)
             .build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
@@ -157,8 +157,8 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
-            .withComponent(new BTestComponent())
+            .withComponent(ATestComponent)
+            .withComponent(BTestComponent)
             .build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
@@ -173,7 +173,7 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
+            .withComponent(ATestComponent)
             .build();
         world.run();
 
@@ -190,7 +190,7 @@ describe('Masking', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
+            .withComponent(ATestComponent)
             .build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA) as TestSystem;
@@ -211,8 +211,8 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
-            .withComponent(new BTestComponent())
+            .withComponent(ATestComponent)
+            .withComponent(BTestComponent)
             .build();
         world.run();
 
@@ -247,7 +247,7 @@ describe('Masking', () => {
             Without(ATestComponent)
         ]);
         const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world).withComponent(new CTestComponent()).build();
+        EntityBuilder.create(world).withComponent(CTestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(1);
@@ -265,7 +265,7 @@ describe('Masking', () => {
     it('does not include any entities if it has no aspects', () => {
         const TestSystemA = setupSystemType([]);
         const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world).withComponent(new ATestComponent()).build();
+        EntityBuilder.create(world).withComponent(ATestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(0);
@@ -274,7 +274,7 @@ describe('Masking', () => {
     it('does not match entity by its parent mask directly', () => {
         const TestSystemA = setupSystemType([ParentHas(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world).withComponent(new ATestComponent()).build();
+        EntityBuilder.create(world).withComponent(ATestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(0);
@@ -284,7 +284,7 @@ describe('Masking', () => {
         const TestSystemA = setupSystemType([ParentHas(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
+            .withComponent(ATestComponent)
             .withChild(EntityBuilder.create(world).build())
             .build();
         world.run();
@@ -300,10 +300,10 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new BTestComponent())
+            .withComponent(BTestComponent)
             .withChild(
                 EntityBuilder.create(world)
-                    .withComponent(new ATestComponent())
+                    .withComponent(ATestComponent)
                     .build()
             )
             .build();
@@ -320,10 +320,10 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
-            .withComponent(new BTestComponent())
+            .withComponent(BTestComponent)
             .build();
         const child = EntityBuilder.create(world)
-            .withComponent(new ATestComponent())
+            .withComponent(ATestComponent)
             .build();
         entity.addChild(child);
         world.run();
@@ -339,7 +339,7 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world)
-            .withComponent(new BTestComponent())
+            .withComponent(BTestComponent)
             .withChild(EntityBuilder.create(world).build())
             .build();
         world.run();
@@ -354,10 +354,10 @@ describe('Masking', () => {
         ]);
         const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world, 'parent')
-            .withComponent(new ATestComponent())
+            .withComponent(ATestComponent)
             .withChild(
                 EntityBuilder.create(world, 'child')
-                    .withComponent(new CTestComponent())
+                    .withComponent(CTestComponent)
                     .build()
             )
             .build();
@@ -375,7 +375,7 @@ describe('Masking', () => {
         EntityBuilder.create(world, 'parent')
             .withChild(
                 EntityBuilder.create(world, 'child')
-                    .withComponent(new CTestComponent())
+                    .withComponent(CTestComponent)
                     .build()
             )
             .build();
@@ -394,8 +394,8 @@ describe('Masking', () => {
         const parent = EntityBuilder.create(world, 'parent')
             .withChild(
                 EntityBuilder.create(world, 'child')
-                    .withComponent(new CTestComponent())
-                    .withComponent(new BTestComponent())
+                    .withComponent(CTestComponent)
+                    .withComponent(BTestComponent)
                     .build()
             )
             .build();

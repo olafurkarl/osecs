@@ -237,9 +237,10 @@ export class EntityBuilder {
     }
 
     withComponent<T extends Component>(
-        component: T,
+        componentConstuctor: { new (): T },
         ...args: Parameters<T['setValues']>
     ): EntityBuilder {
+        const component = new componentConstuctor();
         this.entity.addComponent(component, ...args);
         return this;
     }

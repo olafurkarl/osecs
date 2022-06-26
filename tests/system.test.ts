@@ -32,10 +32,10 @@ class SpawnB extends System {
         this.ents.forEach((e: Entity) => {
             const value = e.getComponent(ATestComponent).value;
             EntityBuilder.create(this.world)
-                .withComponent(new BTestComponent(), { value })
+                .withComponent(BTestComponent, { value })
                 .build();
             EntityBuilder.create(this.world)
-                .withComponent(new BTestComponent(), { value })
+                .withComponent(BTestComponent, { value })
                 .build();
         });
     }
@@ -61,7 +61,7 @@ describe('System', () => {
 
         for (let i = 0; i < 5; i++) {
             EntityBuilder.create(world)
-                .withComponent(new ATestComponent(), { value: i })
+                .withComponent(ATestComponent, { value: i })
                 .build();
         }
 
