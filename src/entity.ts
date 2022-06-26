@@ -71,7 +71,7 @@ export class Entity {
         }
         if (!component) {
             throw new Error(
-                `Component: ${componentClass.name} not found on Entity (name: ${this.name}; id: ${this.id})`
+                `getOrInheritComponent: Component: ${componentClass.name} not found on Entity (name: ${this.name}; id: ${this.id})`
             );
         }
         return component;
