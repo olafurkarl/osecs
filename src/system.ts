@@ -1,3 +1,4 @@
+import { ComponentMaskMap } from './component';
 import Entity from './entity';
 import events from './events';
 
@@ -39,7 +40,7 @@ export default abstract class System {
     getAspectMask(): number {
         if (!this.aspectMask) {
             this.aspectMask = this.aspects()
-                .map((a: any) => a.prototype.getMask())
+                .map((a: any) => ComponentMaskMap[a.name])
                 .reduce((prev, curr) => prev | curr, 0);
         }
         return this.aspectMask as number;

@@ -40,13 +40,12 @@ export default abstract class Component {
         // no-op
     };
 
-    getMask(): number {
-        return 0;
-    }
+    getMask = (): number => {
+        return ComponentMaskMap[this.constructor.name];
+    };
 }
 
-export type ComponentClass<T> = T & { new (...args: any[]): Component };
-export const ComponentByString: Record<string, ComponentClass<unknown>> = {};
+export const ComponentMaskMap: Record<string, number> = {};
 
 export function RegisterComponent<
     T extends { new (...args: any[]): Component }
@@ -57,20 +56,12 @@ export function RegisterComponent<
             `Illegal name of component class. Component name must end in "${componentSuffix}".`
         );
     }
-    const keyName = constructor.name.slice(
-        0,
-        constructor.name.indexOf(componentSuffix)
-    );
-
-    const componentMaskShift = Object.keys(ComponentByString).length;
-    ComponentByString[keyName] = constructor;
+    const keyName = constructor.name;
 
     // At some point we might have more than 53 components, in which case we need to be more clever
     // about how we deal with our masks since MAX_SAFE_INTEGER in JS is 2^53
+    const componentMaskShift = Object.keys(ComponentMaskMap).length;
     const componentMask = 1 << componentMaskShift;
-    Object.defineProperty(constructor.prototype, 'getMask', {
-        value: function () {
-            return componentMask;
-        }
-    });
+
+    ComponentMaskMap[keyName] = componentMask;
 }

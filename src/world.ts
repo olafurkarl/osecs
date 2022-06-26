@@ -11,14 +11,16 @@ interface EntityCleanupRecord {
 export class World {
     private systems: System[] = [];
 
-    addSystem(system: System): void {
+    addSystem(system: System): World {
         this.systems.push(system);
+        return this;
     }
 
-    addSystems(systems: System[]): void {
+    addSystems(systems: System[]): World {
         systems.forEach((s) => {
             this.systems.push(s);
         });
+        return this;
     }
 
     run = (delta: number): void => {

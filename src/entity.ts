@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import Component from './component';
+import Component, { ComponentMaskMap } from './component';
 import { EventEmitter } from 'events';
 import { SystemEvents, World } from './world';
 import events from './events';
@@ -12,16 +12,18 @@ export default class Entity extends EventEmitter {
     public id: string;
     public active = true;
 
-    private components: Partial<Record<string, Component>>;
+    private components: Map<string, Component>;
     private parent: Entity | undefined;
     private children: Entity[] = [];
     public name = 'unknown';
     private world: World;
 
+    private componentMask = 0;
+
     constructor(world: World, name?: string) {
         super();
         this.id = uuidv4();
-        this.components = {};
+        this.components = new Map<string, Component>();
         this.world = world;
         if (name) {
             this.name = name;
@@ -29,7 +31,7 @@ export default class Entity extends EventEmitter {
     }
 
     addComponent(component: Component): void {
-        this.components[component.constructor.name] = component;
+        this.components.set(component.constructor.name, component);
         if (component.onComponentRemoved) {
             this.once(events.ENT_DESTROYED, () => {
                 component.onComponentRemoved?.();
@@ -38,12 +40,16 @@ export default class Entity extends EventEmitter {
 
         this.world.onComponentAdded(this);
         this.setMaxListeners(this.getMaxListeners() + 1);
+
+        this.componentMask |= ComponentMaskMap[component.constructor.name];
     }
 
     getComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): InstanceType<T> {
-        let component = this.components[componentClass.name] as InstanceType<T>;
+        let component = this.components.get(
+            componentClass.name
+        ) as InstanceType<T>;
         if (!component && this.parent) {
             component = this.parent.getComponent(componentClass);
         }
@@ -55,24 +61,30 @@ export default class Entity extends EventEmitter {
         return component;
     }
 
-    getAllComponents(): Partial<Record<string, Component>> {
-        return this.components;
+    getComponentNames(): string[] {
+        return Array.from(this.components.keys());
     }
 
     getComponentMask(): number {
-        return Object.values(this.components)
-            .filter((c): c is Component => !!c)
-            .map((c) => c.getMask())
-            .reduce((prev, cur) => prev | cur, 0);
+        return this.componentMask;
     }
+
+    // getComponentMask(): number {
+    //     return Object.values(this.components)
+    //         .filter(
+    //             (c): c is Component => !!c && typeof c.getMask === 'function'
+    //         )
+    //         .map((c) => c.getMask())
+    //         .reduce((prev, cur) => prev | cur, 0);
+    // }
 
     hasComponent<T extends { new (...args: never): Component }>(
         componentClass: T | Component
     ): boolean {
         if (componentClass instanceof Component) {
-            return !!this.components[componentClass.constructor.name];
+            return this.components.has(componentClass.constructor.name);
         }
-        return !!this.components[componentClass.name];
+        return this.components.has(componentClass.name);
     }
 
     removeComponent<T extends { new (...args: never): Component }>(
@@ -81,13 +93,15 @@ export default class Entity extends EventEmitter {
         if (this.hasComponent(componentClass)) {
             const removeCallback = () => {
                 this.getComponent(componentClass).onComponentRemoved();
-                delete this.components[componentClass.name];
+                this.components.delete(componentClass.name);
             };
             this.world.onComponentRemoved({
                 entity: this,
                 componentName: componentClass.name,
                 onRemove: removeCallback
             });
+
+            this.componentMask &= ~ComponentMaskMap[componentClass.name];
         }
     }
 
@@ -125,7 +139,7 @@ export default class Entity extends EventEmitter {
     }
 
     override toString(): string {
-        const components = Object.keys(this.getAllComponents());
+        const components = this.getComponentNames();
         components.toString = function () {
             return this.join('; ');
         };
