@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Entity } from './entity';
-import { v4 as uuidv4 } from 'uuid';
 
 export type ComponentId = number;
-export type ComponentInstanceId = string;
 export type ComponentName = string;
 /**
  * Component that can be attached to entities.
@@ -21,23 +19,11 @@ export abstract class Component {
     // Entity that this component is attached to
     private declare entity: Entity;
 
-    // Id for this component instance.
-    private instanceId: ComponentInstanceId;
-
-    constructor() {
-        this.instanceId = uuidv4();
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types
     setValues(values?: Object): void {
         // nothing implemented for init by default
         return;
     }
-
-    getId(): ComponentInstanceId {
-        return this.instanceId;
-    }
-
     setEntity(entity: Entity): void {
         this.entity = entity;
     }
@@ -51,9 +37,13 @@ export abstract class Component {
         return this.entity;
     }
 
-    public onComponentRemoved: () => void = () => {
+    onComponentRemoved() {
         // no-op
-    };
+    }
+
+    toString(): string {
+        return `${this.constructor.name}`;
+    }
 }
 
 export function RegisterComponent<

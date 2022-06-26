@@ -7,7 +7,8 @@ import {
     World,
     EntityBuilder,
     Without,
-    ParentHas
+    ParentHas,
+    ParentWithout
 } from '../src/index';
 import { Mask } from '../src/mask';
 import { Query } from '../src/query';
@@ -344,6 +345,64 @@ describe('Masking', () => {
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(0);
+    });
+
+    it('parent exclude query doesnt include entity if parent is missing component', () => {
+        const TestSystemA = setupSystemType([
+            Has(CTestComponent),
+            ParentWithout(ATestComponent)
+        ]);
+        const world = World.create().withSystem(TestSystemA).build();
+        EntityBuilder.create(world, 'parent')
+            .withComponent(new ATestComponent())
+            .withChild(
+                EntityBuilder.create(world, 'child')
+                    .withComponent(new CTestComponent())
+                    .build()
+            )
+            .build();
+        world.run();
+        const testSystemInst = world.getSystem(TestSystemA);
+        expect(testSystemInst.getEntities().length).toEqual(0);
+    });
+
+    it('parent exclude query doesnt exclude entity if parent doesnt have component excluded in query', () => {
+        const TestSystemA = setupSystemType([
+            Has(CTestComponent),
+            ParentWithout(ATestComponent)
+        ]);
+        const world = World.create().withSystem(TestSystemA).build();
+        EntityBuilder.create(world, 'parent')
+            .withChild(
+                EntityBuilder.create(world, 'child')
+                    .withComponent(new CTestComponent())
+                    .build()
+            )
+            .build();
+        world.run();
+        const testSystemInst = world.getSystem(TestSystemA);
+        expect(testSystemInst.getEntities().length).toEqual(1);
+    });
+
+    it('parent has query works with regular has query', () => {
+        const TestSystemA = setupSystemType([
+            Has(CTestComponent),
+            Has(BTestComponent),
+            ParentHas(ATestComponent)
+        ]);
+        const world = World.create().withSystem(TestSystemA).build();
+        const parent = EntityBuilder.create(world, 'parent')
+            .withChild(
+                EntityBuilder.create(world, 'child')
+                    .withComponent(new CTestComponent())
+                    .withComponent(new BTestComponent())
+                    .build()
+            )
+            .build();
+        parent.addComponent(new ATestComponent());
+        world.run();
+        const testSystemInst = world.getSystem(TestSystemA);
+        expect(testSystemInst.getEntities().length).toEqual(1);
     });
 });
 

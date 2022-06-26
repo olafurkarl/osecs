@@ -45,6 +45,9 @@ export class Entity {
         this._componentMask.flipOn(component.componentId - 1);
 
         this.world.updateRegistry(component.constructor.name, this);
+        this.children.forEach((child) => {
+            this.world.updateRegistry(component.constructor.name, child);
+        });
     }
 
     upsertComponent<T extends Component>(
@@ -118,6 +121,13 @@ export class Entity {
             this.components.delete(componentName);
 
             this.world.updateRegistry(componentName, this);
+            this.children.forEach((child) => {
+                this.world.updateRegistry(componentName, child);
+            });
+        } else {
+            console.log(
+                `${this.name} tried to remove ${componentName} but did not have it.`
+            );
         }
     }
     equals(other: Entity): boolean {
@@ -137,7 +147,10 @@ export class Entity {
         entity._parent = this;
 
         this.getComponentNames().forEach((cn) => {
-            this.world.updateParentRegistry(cn, this, entity);
+            this.world.updateRegistry(cn, entity);
+        });
+        entity.getComponentNames().forEach((cn) => {
+            this.world.updateRegistry(cn, entity);
         });
     }
 
@@ -196,10 +209,12 @@ export class Entity {
     }
 
     toString(): string {
-        const components = this.getComponentNames();
+        const components = Array.from(this.components.values());
 
         let componentString = '';
-        components.forEach((c) => (componentString += `<li>${c}</li>`));
+        components.forEach(
+            (c) => (componentString += `<li>${c.toString()}</li>`)
+        );
         let string = `<p>${this.name} entity id: ${this.id}</p> components:<ul>${componentString}<ul>`;
         Array.from(this.children.values()).forEach(
             (c) =>

@@ -38,7 +38,6 @@ type ComponentName = string;
 export class World {
     private systems: System[] = [];
     private queryRegistry: Map<ComponentName, Query[]> = new Map();
-    private parentQueryRegistry: Map<ComponentName, Query[]> = new Map();
 
     static create(): WorldBuilder {
         return new WorldBuilder();
@@ -48,7 +47,7 @@ export class World {
      * Keeping track of which queries are interested in which components,
      * in order to reduce the amount of iterations when updating entity lists
      */
-    addToAspectRegistry(
+    addToQueryRegistry(
         key: ComponentName,
         query: Query,
         registry: Map<ComponentName, Query[]>
@@ -64,19 +63,11 @@ export class World {
         system.queries.forEach((query: Query) => {
             const aspects = query.aspects;
             aspects.forEach((a) => {
-                if (a instanceof ParentHasAspect) {
-                    this.addToAspectRegistry(
-                        a.componentName,
-                        query,
-                        this.parentQueryRegistry
-                    );
-                } else {
-                    this.addToAspectRegistry(
-                        a.componentName,
-                        query,
-                        this.queryRegistry
-                    );
-                }
+                this.addToQueryRegistry(
+                    a.componentName,
+                    query,
+                    this.queryRegistry
+                );
             });
         });
     }
@@ -105,26 +96,6 @@ export class World {
                 query.unregisterEntity(entity);
             } else if (registerThisEntity) {
                 query.registerEntity(entity);
-            }
-        });
-    }
-
-    updateParentRegistry(
-        componentName: string,
-        parentEnt: Entity,
-        childEnt: Entity
-    ): void {
-        /**
-         * TODO:
-         * This actually has the potential to iterate through the same query multiple times
-         * It should be possible to narrow it down so that we only check each query once?
-         */
-        this.parentQueryRegistry.get(componentName)?.forEach((query) => {
-            const registerThisEntity = query.shouldRegisterEntity(childEnt);
-            if (registerThisEntity) {
-                query.registerEntity(childEnt);
-            } else {
-                query.unregisterEntity(childEnt);
             }
         });
     }
