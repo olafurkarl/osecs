@@ -17,8 +17,8 @@ abstract class TestSystem extends System {
     };
 }
 
-const setupSystem = (aspects: unknown[], excludes: unknown[]): TestSystem => {
-    return new (class TSystem extends TestSystem {
+const setupSystem = (aspects: unknown[], excludes: unknown[]): any => {
+    return class TSystem extends TestSystem {
         run(): void {
             // no-op
         }
@@ -28,14 +28,17 @@ const setupSystem = (aspects: unknown[], excludes: unknown[]): TestSystem => {
         excludes(): unknown[] {
             return [...excludes];
         }
-    })();
+    };
 };
 
 describe('Masking', () => {
     it('gets the correct aspect mask', () => {
-        const testSystem01 = setupSystem([ATestComponent], []);
-        const testSystem10 = setupSystem([BTestComponent], []);
-        const testSystem11 = setupSystem([ATestComponent, BTestComponent], []);
+        const testSystem01 = new (setupSystem([ATestComponent], []))();
+        const testSystem10 = new (setupSystem([BTestComponent], []))();
+        const testSystem11 = new (setupSystem(
+            [ATestComponent, BTestComponent],
+            []
+        ))();
 
         expect(testSystem01.getAspectMask()).toEqual(0b01);
         expect(testSystem10.getAspectMask()).toEqual(0b10);
@@ -43,9 +46,12 @@ describe('Masking', () => {
     });
 
     it('gets the correct exclude mask', () => {
-        const testSystem01 = setupSystem([], [ATestComponent]);
-        const testSystem10 = setupSystem([], [BTestComponent]);
-        const testSystem11 = setupSystem([], [ATestComponent, BTestComponent]);
+        const testSystem01 = new (setupSystem([], [ATestComponent]))();
+        const testSystem10 = new (setupSystem([], [BTestComponent]))();
+        const testSystem11 = new (setupSystem(
+            [],
+            [ATestComponent, BTestComponent]
+        ))();
 
         expect(testSystem01.getExcludeMask()).toEqual(
             0b11111111111111111111111111111110
@@ -59,45 +65,50 @@ describe('Masking', () => {
     });
 
     it('gets entity if it has the same aspect mask', () => {
-        const testSystem = setupSystem([ATestComponent], []);
-        const world = World.create().withSystem(testSystem).build();
+        const TestSystemA = setupSystem([ATestComponent], []);
+        const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())
             .build();
         world.sync();
-        expect(testSystem.getEntities().length).toEqual(1);
-        expect(testSystem.getEntities()[0].equals(entity)).toEqual(true);
+        const testSystemInst = world.getSystem(TestSystemA);
+        expect(testSystemInst.getEntities().length).toEqual(1);
+        expect(testSystemInst.getEntities()[0].equals(entity)).toEqual(true);
     });
 
     it('gets entity if it has a different but matching aspect mask', () => {
-        const testSystem = setupSystem([ATestComponent], []);
-        const world = World.create().withSystem(testSystem).build();
+        const TestSystemA = setupSystem([ATestComponent], []);
+
+        const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())
             .withComponent(new BTestComponent())
             .build();
         world.sync();
-
-        expect(testSystem.getAspectMask).not.toEqual(entity.getComponentMask());
-        expect(testSystem.getEntities().length).toEqual(1);
-        expect(testSystem.getEntities()[0].equals(entity)).toEqual(true);
+        const testSystemInst = world.getSystem(TestSystemA);
+        expect(testSystemInst.getAspectMask()).not.toEqual(
+            entity.getComponentMask()
+        );
+        expect(testSystemInst.getEntities().length).toEqual(1);
+        expect(testSystemInst.getEntities()[0].equals(entity)).toEqual(true);
     });
 
     it('does not get entity if it is excluded by exclusion mask by initial components', () => {
-        const testSystem = setupSystem([ATestComponent], [BTestComponent]);
-        const world = World.create().withSystem(testSystem).build();
+        const TestSystemA = setupSystem([ATestComponent], [BTestComponent]);
+        const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world)
             .withComponent(new ATestComponent())
             .withComponent(new BTestComponent())
             .build();
         world.sync();
+        const testSystemInst = world.getSystem(TestSystemA);
 
-        expect(testSystem.getEntities().length).toEqual(0);
+        expect(testSystemInst.getEntities().length).toEqual(0);
     });
 
     it('does not get entity if it is excluded by exclusion mask, via having an excluded component added later', () => {
-        const testSystem = setupSystem([ATestComponent], [BTestComponent]);
-        const world = World.create().withSystem(testSystem).build();
+        const TestSystemA = setupSystem([ATestComponent], [BTestComponent]);
+        const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())
             .build();
@@ -107,6 +118,48 @@ describe('Masking', () => {
 
         world.sync();
 
-        expect(testSystem.getEntities().length).toEqual(0);
+        const testSystemInst = world.getSystem(TestSystemA);
+
+        expect(testSystemInst.getEntities().length).toEqual(0);
+    });
+
+    it('does not get entity if it is has its aspect component removed later', () => {
+        const TestSystemA = setupSystem([ATestComponent], []);
+        const world = World.create().withSystem(TestSystemA).build();
+        const entity = EntityBuilder.create(world)
+            .withComponent(new ATestComponent())
+            .build();
+        world.sync();
+        const testSystemInst = world.getSystem(TestSystemA) as TestSystem;
+
+        expect(testSystemInst.getEntities().length).toEqual(1);
+
+        entity.removeComponent(ATestComponent);
+
+        world.sync();
+
+        expect(testSystemInst.getEntities().length).toEqual(0);
+    });
+
+    it('masks out an entity completely when it is destroyed', () => {
+        const TestSystemA = setupSystem([ATestComponent, BTestComponent], []);
+        const world = World.create().withSystem(TestSystemA).build();
+        const entity = EntityBuilder.create(world)
+            .withComponent(new ATestComponent())
+            .withComponent(new BTestComponent())
+            .build();
+        world.sync();
+
+        expect(entity.getComponentMask()).toEqual(0b11);
+
+        entity.destroy();
+
+        world.sync();
+
+        expect(entity.getComponentMask()).toEqual(0b00);
+
+        const testSystemInst = world.getSystem(TestSystemA) as TestSystem;
+
+        expect(testSystemInst.getEntities().length).toEqual(0);
     });
 });

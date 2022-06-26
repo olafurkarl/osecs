@@ -1,10 +1,16 @@
 import { ComponentMaskMap } from './component';
-import Entity from './entity';
-import events from './events';
+import { Entity } from './entity';
+import { World } from './world';
 
-export default abstract class System {
+export abstract class System {
     private entityIds = new Set<string>();
     protected entities: Entity[] = [];
+
+    public world: World;
+
+    constructor(world: World) {
+        this.world = world;
+    }
 
     hasEntity(entity: Entity): boolean {
         return this.entityIds.has(entity.id);
@@ -14,9 +20,6 @@ export default abstract class System {
         if (!this.hasEntity(entity)) {
             this.entities.push(entity);
             this.entityIds.add(entity.id);
-            entity.once(events.ENT_DESTROYED, (entity: Entity) => {
-                this.unregisterEntity(entity);
-            });
         }
     }
 

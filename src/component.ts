@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Entity } from './entity';
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Component that can be attached to entities.
  */
-
-import Entity from './entity';
-import { v4 as uuidv4 } from 'uuid';
-export default abstract class Component {
+export abstract class Component {
     private declare entity: Entity;
     private id: string;
 

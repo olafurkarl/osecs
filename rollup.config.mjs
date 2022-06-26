@@ -5,21 +5,15 @@ export default [
     {
         input: 'src/index.ts',
         output: [
-            // {
-            //     file: 'lib/index.js',
-            //     format: 'esm',
-            //     sourcemap: true
-            // },
-            // {
-            //     file: 'lib/index.umd.js',
-            //     name: 'osecs',
-            //     format: 'umd',
-            //     sourcemap: true
-            // },
             {
-                file: 'lib/index.module.js',
+                file: 'lib/index.js',
+                format: 'esm',
+                sourcemap: true
+            },
+            {
+                file: 'lib/index.umd.js',
                 name: 'osecs',
-                format: 'es',
+                format: 'umd',
                 sourcemap: true
             }
         ],

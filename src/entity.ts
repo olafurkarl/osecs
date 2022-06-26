@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import Component, { ComponentMaskMap } from './component';
-import { EventEmitter } from 'events';
-import { SystemEvents, World } from './world';
-import events from './events';
+import { Component, ComponentMaskMap } from './component';
+import { World } from './world';
 
 /**
  * A base class from which all game entities derive, supports adding and removing {@link Component | Components}
  */
-export default class Entity extends EventEmitter {
+export class Entity {
     public id: string;
     public active = true;
 
@@ -20,8 +18,9 @@ export default class Entity extends EventEmitter {
 
     private componentMask = 0;
 
+    private cleanupCallbacks: { (): void }[] = [];
+
     constructor(world: World, name?: string) {
-        super();
         this.id = uuidv4();
         this.components = new Map<string, Component>();
         this.world = world;
@@ -32,26 +31,23 @@ export default class Entity extends EventEmitter {
 
     addComponent(component: Component): void {
         this.components.set(component.constructor.name, component);
-        if (component.onComponentRemoved) {
-            this.once(events.ENT_DESTROYED, () => {
-                component.onComponentRemoved?.();
-            });
-        }
-
         this.world.onComponentAdded(this);
-        this.setMaxListeners(this.getMaxListeners() + 1);
 
         this.componentMask |= ComponentMaskMap[component.constructor.name];
     }
 
-    getComponent<T extends { new (...args: never): Component }>(
+    /**
+     * Finds and return a given component on this entity, or any parent entity
+     * @param componentClass Component to fetch
+     * @returns Component instance
+     */
+    getOrInheritComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): InstanceType<T> {
-        let component = this.components.get(
-            componentClass.name
-        ) as InstanceType<T>;
+        let component = this.getComponent(componentClass);
+
         if (!component && this.parent) {
-            component = this.parent.getComponent(componentClass);
+            component = this.parent.getOrInheritComponent(componentClass);
         }
         if (!component) {
             throw new Error(
@@ -59,6 +55,12 @@ export default class Entity extends EventEmitter {
             );
         }
         return component;
+    }
+
+    getComponent<T extends { new (...args: never): Component }>(
+        componentClass: T
+    ): InstanceType<T> {
+        return this.components.get(componentClass.name) as InstanceType<T>;
     }
 
     getComponentNames(): string[] {
@@ -81,27 +83,35 @@ export default class Entity extends EventEmitter {
     removeComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): void {
-        if (this.hasComponent(componentClass)) {
+        this.removeComponentByName(componentClass.name);
+    }
+
+    removeComponentByName(componentName: string): void {
+        if (this.components.has(componentName)) {
             const removeCallback = () => {
-                this.getComponent(componentClass).onComponentRemoved();
-                this.components.delete(componentClass.name);
+                this.components.get(componentName)?.onComponentRemoved();
+                this.components.delete(componentName);
             };
             this.world.onComponentRemoved({
                 entity: this,
-                componentName: componentClass.name,
+                componentName: componentName,
                 onRemove: removeCallback
             });
 
-            this.componentMask &= ~ComponentMaskMap[componentClass.name];
+            this.componentMask &= ~ComponentMaskMap[componentName];
         }
     }
-
     equals(other: Entity): boolean {
         return this.id === other.id;
     }
 
     addChild(entity: Entity): void {
         this.children.push(entity);
+    }
+
+    // todo: not performant. probably good to switch to a map or something.
+    removeChild(entity: Entity): void {
+        this.children = this.children.filter((c) => c.id !== entity.id);
     }
 
     getChildren(): Entity[] {
@@ -129,7 +139,27 @@ export default class Entity extends EventEmitter {
         return this.parent;
     }
 
-    override toString(): string {
+    addCleanupCallback(callback: () => void): void {
+        this.cleanupCallbacks.push(callback);
+    }
+
+    destroy(): void {
+        this.components.forEach((c) => {
+            this.removeComponentByName(c.constructor.name);
+        });
+
+        this.cleanupCallbacks.forEach((cb) => {
+            cb();
+        });
+
+        if (this.parent) {
+            this.parent.removeChild(this);
+        }
+
+        this.children.forEach((c) => c.destroy());
+    }
+
+    toString(): string {
         const components = this.getComponentNames();
         components.toString = function () {
             return this.join('; ');
@@ -166,8 +196,6 @@ export class EntityBuilder {
         return this;
     }
     build(): Entity {
-        // TODO: Move this to the world's events instead (if we're keeping events)
-        SystemEvents.emit(events.ENT_CREATED, this.entity);
         return this.entity;
     }
 }

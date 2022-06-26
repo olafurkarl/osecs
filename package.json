@@ -2,7 +2,8 @@
   "name": "osecs",
   "version": "0.0.1",
   "description": "Oli's Simple ECS",
-  "main": "src/index.ts",
+  "main": "lib/index.umd.js",
+  "types": "lib/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
@@ -16,14 +17,15 @@
   "license": "ISC",
   "exports": {
     ".": "./src/index.ts",
-    "./perf.js": "./lib/index.module.js"
+    "./perf.js": "./lib/index.js"
   },
-  "module": "lib/index.module.js",
+  "module": "lib/index.js",
   "dependencies": {
     "rollup": "^2.61.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/node": "^17.0.2",
     "jest": "^27.4.5",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-ts": "^2.0.4"

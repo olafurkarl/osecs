@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
-import System from './system';
-import Entity from './entity';
+import { System } from './system';
+import { Entity } from './entity';
 
 interface EntityCleanupRecord {
     entity: Entity;
@@ -19,14 +19,16 @@ class WorldBuilder {
         return new WorldBuilder();
     }
 
-    withSystem(system: System): WorldBuilder {
-        this.world.addSystem(system);
+    withSystem<T extends { new (...args: never): any }>(systemClass: T) {
+        this.world.addSystem(new systemClass());
         return this;
     }
 
-    withSystems(systems: System[]): WorldBuilder {
-        systems.forEach((s) => {
-            this.world.addSystem(s);
+    withSystems<T extends { new (...args: never): any }>(
+        systemClasses: T[]
+    ): WorldBuilder {
+        systemClasses.forEach((s) => {
+            this.withSystem(s);
         });
         return this;
     }
@@ -113,6 +115,17 @@ export class World {
                 s.unregisterEntity(entity);
             });
     };
+
+    /**
+     * Used for testing
+     */
+    getSystem<T extends { new (...args: never): System }>(
+        componentClass: T
+    ): T {
+        return this.systems.filter(
+            (s) => s.constructor.name === componentClass.name
+        )[0] as InstanceType<T>;
+    }
 }
 
 export const SystemEvents = new EventEmitter();
