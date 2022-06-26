@@ -39,6 +39,7 @@ export class Entity {
         component: T,
         ...args: Parameters<T['setValues']>
     ): void {
+        component.setEntity(this);
         component.setValues(...args);
 
         this.components.set(component.constructor.name, component);
@@ -239,7 +240,6 @@ export class EntityBuilder {
         component: T,
         ...args: Parameters<T['setValues']>
     ): EntityBuilder {
-        component.setEntity(this.entity);
         this.entity.addComponent(component, ...args);
         return this;
     }

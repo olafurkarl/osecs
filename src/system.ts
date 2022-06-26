@@ -2,6 +2,7 @@ import { World } from './world';
 import { v4 as uuidv4 } from 'uuid';
 import { Aspect } from './aspect';
 import { Query } from './query';
+import { EntityBuilder } from '.';
 
 export type SystemId = string;
 export abstract class System {
@@ -24,5 +25,9 @@ export abstract class System {
         const query = new Query(aspects);
         this._queries.push(query);
         return query;
+    }
+
+    protected spawnEntity(name?: string) {
+        return EntityBuilder.create(this.world, name);
     }
 }
