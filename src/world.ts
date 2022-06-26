@@ -1,5 +1,5 @@
 import { System } from './system';
-import { Entity } from './entity';
+import { Entity, EntityBuilder } from './entity';
 
 class WorldBuilder {
     private world: World;
@@ -41,20 +41,20 @@ export class World {
         return new WorldBuilder();
     }
 
-    validateSystem(system: System): void {
-        system.aspects().forEach((e) => {
-            if (
-                system
-                    .excludes()
-                    .map((f) => (f as any).name)
-                    .includes((e as any).name)
-            ) {
-                throw new Error(
-                    'System aspects must not contains any of its excludes'
-                );
-            }
-        });
-    }
+    // validateSystem(system: System): void {
+    //     system.aspects().forEach((e) => {
+    //         if (
+    //             system
+    //                 .excludes()
+    //                 .map((f) => (f as any).name)
+    //                 .includes((e as any).name)
+    //         ) {
+    //             throw new Error(
+    //                 'System aspects must not contains any of its excludes'
+    //             );
+    //         }
+    //     });
+    // }
 
     addToSCMap(key: ComponentName, system: System): void {
         if (!this.systemComponentMap.has(key)) {
@@ -66,15 +66,12 @@ export class World {
 
     mapAspectsAndExcludes(system: System): void {
         system.aspects().forEach((a) => {
-            this.addToSCMap(a.name, system);
-        });
-        system.excludes().forEach((e) => {
-            this.addToSCMap(e.name, system);
+            this.addToSCMap(a.componentName, system);
         });
     }
 
     addSystem(system: System): void {
-        this.validateSystem(system);
+        // this.validateSystem(system);
         this.mapAspectsAndExcludes(system);
         this.systems.push(system);
     }
@@ -91,7 +88,7 @@ export class World {
 
     checkAddOrRemove = (entity: Entity, s: System): boolean =>
         checkMask(entity.getComponentMask(), s.getExcludeMask()) &&
-        checkMask(s.getAspectMask(), entity.getComponentMask());
+        checkMask(s.getIncludeMask(), entity.getComponentMask());
 
     updateRegistry(componentName: string, entity: Entity): void {
         this.systemComponentMap.get(componentName)?.forEach((system) => {
@@ -102,6 +99,10 @@ export class World {
                 system.registerEntity(entity);
             }
         });
+    }
+
+    spawnEntity(name?: string): EntityBuilder {
+        return EntityBuilder.create(this, name);
     }
 
     /**

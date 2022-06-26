@@ -1,6 +1,7 @@
 import {
     Component,
     EntityBuilder,
+    Has,
     RegisterComponent,
     System,
     World
@@ -10,7 +11,7 @@ import {
 class ATestComponent extends Component {
     declare value: number;
 
-    override init(args: { value: number }) {
+    override setValues(args: { value: number }) {
         this.value = args.value;
     }
 }
@@ -18,17 +19,14 @@ class ATestComponent extends Component {
 class BTestComponent extends Component {
     declare value: number;
 
-    override init(args: { value: number }) {
+    override setValues(args: { value: number }) {
         this.value = args.value;
     }
 }
 
 class SpawnB extends System {
     aspects() {
-        return [ATestComponent];
-    }
-    excludes() {
-        return [];
+        return [Has(ATestComponent)];
     }
 
     run() {
@@ -46,7 +44,7 @@ class SpawnB extends System {
 
 class KillB extends System {
     aspects() {
-        return [BTestComponent];
+        return [Has(BTestComponent)];
     }
     excludes() {
         return [];

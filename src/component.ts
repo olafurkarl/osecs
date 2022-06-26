@@ -18,7 +18,7 @@ export abstract class Component {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types
-    init(args?: Object): void {
+    setValues(values?: Object): void {
         // nothing implemented for init by default
         return;
     }

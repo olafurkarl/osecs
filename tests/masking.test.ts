@@ -1,9 +1,12 @@
 import {
-    Component,
-    EntityBuilder,
     RegisterComponent,
+    Component,
     System,
-    World
+    Aspect,
+    Has,
+    World,
+    EntityBuilder,
+    Without
 } from '../src/index';
 
 @RegisterComponent
@@ -17,44 +20,38 @@ abstract class TestSystem extends System {
     };
 }
 
-const setupSystem = (
-    aspects: typeof Component[],
-    excludes: typeof Component[]
-): any => {
+const setupSystem = (aspects: Aspect[]): any => {
     return class TSystem extends TestSystem {
         run(): void {
             // no-op
         }
-        aspects(): typeof Component[] {
+        aspects() {
             return [...aspects];
-        }
-        excludes(): typeof Component[] {
-            return [...excludes];
         }
     };
 };
 
 describe('Masking', () => {
     it('gets the correct aspect mask', () => {
-        const testSystem01 = new (setupSystem([ATestComponent], []))();
-        const testSystem10 = new (setupSystem([BTestComponent], []))();
-        const testSystem11 = new (setupSystem(
-            [ATestComponent, BTestComponent],
-            []
-        ))();
+        const testSystem01 = new (setupSystem([Has(ATestComponent)]))();
+        const testSystem10 = new (setupSystem([Has(BTestComponent)]))();
+        const testSystem11 = new (setupSystem([
+            Has(ATestComponent),
+            Has(BTestComponent)
+        ]))();
 
-        expect(testSystem01.getAspectMask()).toEqual(0b01);
-        expect(testSystem10.getAspectMask()).toEqual(0b10);
-        expect(testSystem11.getAspectMask()).toEqual(0b11);
+        expect(testSystem01.getIncludeMask()).toEqual(0b01);
+        expect(testSystem10.getIncludeMask()).toEqual(0b10);
+        expect(testSystem11.getIncludeMask()).toEqual(0b11);
     });
 
     it('gets the correct exclude mask', () => {
-        const testSystem01 = new (setupSystem([], [ATestComponent]))();
-        const testSystem10 = new (setupSystem([], [BTestComponent]))();
-        const testSystem11 = new (setupSystem(
-            [],
-            [ATestComponent, BTestComponent]
-        ))();
+        const testSystem01 = new (setupSystem([Without(ATestComponent)]))();
+        const testSystem10 = new (setupSystem([Without(BTestComponent)]))();
+        const testSystem11 = new (setupSystem([
+            Without(ATestComponent),
+            Without(BTestComponent)
+        ]))();
 
         expect(testSystem01.getExcludeMask()).toEqual(
             0b11111111111111111111111111111110
@@ -68,7 +65,7 @@ describe('Masking', () => {
     });
 
     it('gets entity if it has the same aspect mask', () => {
-        const TestSystemA = setupSystem([ATestComponent], []);
+        const TestSystemA = setupSystem([Has(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())
@@ -80,7 +77,7 @@ describe('Masking', () => {
     });
 
     it('gets entity if it has a different but matching aspect mask', () => {
-        const TestSystemA = setupSystem([ATestComponent], []);
+        const TestSystemA = setupSystem([Has(ATestComponent)]);
 
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
@@ -89,7 +86,7 @@ describe('Masking', () => {
             .build();
         world.run(1);
         const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getAspectMask()).not.toEqual(
+        expect(testSystemInst.getIncludeMask()).not.toEqual(
             entity.getComponentMask()
         );
         expect(testSystemInst.getEntities().length).toEqual(1);
@@ -97,7 +94,10 @@ describe('Masking', () => {
     });
 
     it('does not get entity if it is excluded by exclusion mask by initial components', () => {
-        const TestSystemA = setupSystem([ATestComponent], [BTestComponent]);
+        const TestSystemA = setupSystem([
+            Has(ATestComponent),
+            Without(BTestComponent)
+        ]);
         const world = World.create().withSystem(TestSystemA).build();
         EntityBuilder.create(world)
             .withComponent(new ATestComponent())
@@ -110,7 +110,10 @@ describe('Masking', () => {
     });
 
     it('does not get entity if it is excluded by exclusion mask, via having an excluded component added later', () => {
-        const TestSystemA = setupSystem([ATestComponent], [BTestComponent]);
+        const TestSystemA = setupSystem([
+            Has(ATestComponent),
+            Without(BTestComponent)
+        ]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())
@@ -127,7 +130,7 @@ describe('Masking', () => {
     });
 
     it('does not get entity if its aspect component removed later', () => {
-        const TestSystemA = setupSystem([ATestComponent], []);
+        const TestSystemA = setupSystem([Has(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())
@@ -145,7 +148,10 @@ describe('Masking', () => {
     });
 
     it('masks out an entity completely when it is destroyed', () => {
-        const TestSystemA = setupSystem([ATestComponent, BTestComponent], []);
+        const TestSystemA = setupSystem([
+            Has(ATestComponent),
+            Has(BTestComponent)
+        ]);
         const world = World.create().withSystem(TestSystemA).build();
         const entity = EntityBuilder.create(world)
             .withComponent(new ATestComponent())

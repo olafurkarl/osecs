@@ -34,15 +34,26 @@ export class Entity {
 
     addComponent<T extends Component>(
         component: T,
-        ...args: Parameters<T['init']>
+        ...args: Parameters<T['setValues']>
     ): void {
-        component.init(...args);
+        component.setValues(...args);
 
         this.components.set(component.constructor.name, component);
         this.componentMask |=
             Component.ComponentMaskMap[component.constructor.name];
 
         this.world.updateRegistry(component.constructor.name, this);
+    }
+
+    upsertComponent<T extends Component>(
+        component: T,
+        ...args: Parameters<T['setValues']>
+    ): void {
+        if (!this.hasComponent(component)) {
+            this.addComponent(component, ...args);
+        } else {
+            this.components.get(component.constructor.name)?.setValues(...args);
+        }
     }
 
     /**
@@ -197,7 +208,7 @@ export class EntityBuilder {
 
     withComponent<T extends Component>(
         component: T,
-        ...args: Parameters<T['init']>
+        ...args: Parameters<T['setValues']>
     ): EntityBuilder {
         component.setEntity(this.entity);
 

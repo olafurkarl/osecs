@@ -1,7 +1,7 @@
-import { Component } from './component';
-import { Entity } from './entity';
+import { Entity } from './index';
 import { World } from './world';
 import { v4 as uuidv4 } from 'uuid';
+import { Aspect, HasAspect, ParentHasAspect, WithoutAspect } from './aspect';
 
 export type SystemId = string;
 export abstract class System {
@@ -14,6 +14,7 @@ export abstract class System {
         this.id = uuidv4();
         this.world = world;
         this.entities = new Map<string, Entity>();
+        this.initializeMasks();
     }
 
     /**
@@ -47,57 +48,48 @@ export abstract class System {
 
     abstract run(delta: number): void;
 
-    abstract aspects(): typeof Component[];
-    abstract excludes(): typeof Component[];
+    abstract aspects(): Aspect[];
 
-    private aspectMask: number | undefined;
-    private excludeMask: number | undefined;
-
-    /**
-     * Checks whether the system has a particular component aspect
-     * @param exclude of component's class
-     * @returns boolean (has it or not)
-     */
-    hasAspect(aspect: string): boolean {
-        return this.hasComponent(aspect, this.aspects());
-    }
-
-    /**
-     * Checks whether the system has a particular component excluded
-     * @param exclude of component's class
-     * @returns boolean (has it or not)
-     */
-    hasExclude(exclude: string): boolean {
-        return this.hasComponent(exclude, this.excludes());
-    }
-
-    /**
-     * Checks whether the system has a particular component in either aspects or exclude lists
-     * @param name of component's class
-     * @param array of components (aspects or excludes)
-     * @returns boolean (has it or not)
-     */
-    hasComponent(name: string, array: unknown[]): boolean {
-        return array.map((a: any) => a.name).includes(name);
-    }
-
-    getAspectMask(): number {
-        if (!this.aspectMask) {
-            this.aspectMask = this.getMask(this.aspects());
-        }
-        return this.aspectMask as number;
-    }
+    private includeMask = 0;
+    private excludeMask = 0;
+    private parentInclude = 0;
 
     getExcludeMask(): number {
-        if (!this.excludeMask) {
-            this.excludeMask = ~this.getMask(this.excludes()) >>> 0;
-        }
-        return this.excludeMask as number;
+        return this.excludeMask;
     }
 
-    getMask(maskable: typeof Component[]): number {
-        return maskable
-            .map((a: any) => Component.ComponentMaskMap[a.name])
-            .reduce((prev, curr) => prev | curr, 0);
+    getIncludeMask(): number {
+        return this.includeMask;
+    }
+
+    getParentIncludeMask(): number {
+        return this.parentInclude;
+    }
+
+    initializeMasks(): void {
+        let includeMask = 0,
+            excludeMask = 0,
+            parentIncludeMask = 0;
+
+        this.aspects().forEach((aspect) => {
+            switch (aspect.constructor) {
+                case HasAspect: {
+                    includeMask |= aspect.mask;
+                    break;
+                }
+                case WithoutAspect: {
+                    excludeMask |= aspect.mask;
+                    break;
+                }
+                case ParentHasAspect: {
+                    parentIncludeMask |= aspect.mask;
+                    break;
+                }
+            }
+        });
+
+        this.includeMask = includeMask;
+        this.excludeMask = ~excludeMask >>> 0;
+        this.parentInclude = parentIncludeMask;
     }
 }
