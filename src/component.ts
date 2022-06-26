@@ -3,12 +3,13 @@ import { Entity } from './entity';
 import { v4 as uuidv4 } from 'uuid';
 
 export type ComponentId = string;
+export type ComponentName = string;
 /**
  * Component that can be attached to entities.
  */
 export abstract class Component {
     private declare entity: Entity;
-    private id: ComponentId; // Don't know if I'll ever use this? TODO: remove
+    private id: ComponentId;
 
     constructor() {
         this.id = uuidv4();
@@ -20,7 +21,7 @@ export abstract class Component {
         return;
     }
 
-    getId(): string {
+    getId(): ComponentId {
         return this.id;
     }
 

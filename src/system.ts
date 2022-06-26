@@ -1,14 +1,17 @@
 import { Component, ComponentMaskMap } from './component';
 import { Entity } from './entity';
 import { World } from './world';
+import { v4 as uuidv4 } from 'uuid';
 
+export type SystemId = string;
 export abstract class System {
-    private entityIds = new Set<string>();
-    protected entities: Map<string, Entity>;
-
+    public id: SystemId;
     public world: World;
 
+    protected entities: Map<string, Entity>;
+
     constructor(world: World) {
+        this.id = uuidv4();
         this.world = world;
         this.entities = new Map<string, Entity>();
     }
@@ -19,7 +22,7 @@ export abstract class System {
      * @returns whether the entity is in the system's entity list
      */
     hasEntity(entity: Entity): boolean {
-        return this.entityIds.has(entity.id);
+        return this.entities.has(entity.id);
     }
 
     /**
@@ -29,6 +32,7 @@ export abstract class System {
     registerEntity(entity: Entity): void {
         if (!this.hasEntity(entity)) {
             this.entities.set(entity.id, entity);
+            entity.registerSystem(this);
         }
     }
 
@@ -38,6 +42,7 @@ export abstract class System {
      */
     unregisterEntity(entity: Entity): void {
         this.entities.delete(entity.id);
+        entity.unregisterSystem(this);
     }
 
     abstract run(delta: number): void;

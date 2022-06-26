@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import { Component, ComponentMaskMap } from './component';
+import { Component, ComponentMaskMap, ComponentName } from './component';
+import { System, SystemId } from './system';
 import { World } from './world';
 
 export type EntityId = string;
@@ -10,17 +11,16 @@ export type EntityId = string;
  */
 export class Entity {
     public id: EntityId;
-    public active = true;
-
-    private components: Map<string, Component>;
-    private parent: Entity | undefined;
-    private children: Map<string, Entity>;
     public name = 'unknown';
+
+    private parent: Entity | undefined;
     private world: World;
-
     private componentMask = 0;
-
     private cleanupCallbacks: { (): void }[] = [];
+
+    private components: Map<ComponentName, Component>;
+    private children: Map<EntityId, Entity>;
+    private currentSystems = new Map<SystemId, System>();
 
     constructor(world: World, name?: string) {
         this.id = uuidv4().split('-')[0];
@@ -41,7 +41,7 @@ export class Entity {
         this.components.set(component.constructor.name, component);
         this.componentMask |= ComponentMaskMap[component.constructor.name];
 
-        this.world.onComponentAdded(component.constructor.name, this);
+        this.world.updateRegistry(component.constructor.name, this);
     }
 
     /**
@@ -71,7 +71,7 @@ export class Entity {
         return this.components.get(componentClass.name) as InstanceType<T>;
     }
 
-    getComponentNames(): string[] {
+    getComponentNames(): ComponentName[] {
         return Array.from(this.components.keys());
     }
 
@@ -94,19 +94,27 @@ export class Entity {
         this.removeComponentByName(componentClass.name);
     }
 
-    removeComponentByName(componentName: string): void {
+    removeComponentByName(componentName: ComponentName): void {
         if (this.components.has(componentName)) {
-            const removeCallback = () => {
-                this.components.get(componentName)?.onComponentRemoved();
-                this.components.delete(componentName);
-            };
-            this.world.onComponentRemoved(componentName, this, removeCallback);
-
+            // todo: move this inside world for cohesion
             this.componentMask &= ~ComponentMaskMap[componentName];
+
+            this.components.get(componentName)?.onComponentRemoved();
+            this.components.delete(componentName);
+
+            this.world.updateRegistry(componentName, this);
         }
     }
     equals(other: Entity): boolean {
         return this.id === other.id;
+    }
+
+    registerSystem(system: System): void {
+        this.currentSystems.set(system.id, system);
+    }
+
+    unregisterSystem(system: System): void {
+        this.currentSystems.delete(system.id);
     }
 
     addChild(entity: Entity): void {
@@ -146,11 +154,12 @@ export class Entity {
         this.cleanupCallbacks.push(callback);
     }
 
-    queueDestroy(): void {
-        this.world.queueDestroy(this);
-    }
+    destroy(): void {
+        // use maintained list of registered systems and unregister entity
+        this.currentSystems.forEach((s) => {
+            s.unregisterEntity(this);
+        });
 
-    _destroy(): void {
         this.components.forEach((c) => {
             this.removeComponentByName(c.constructor.name);
         });
@@ -163,7 +172,7 @@ export class Entity {
             this.parent.removeChild(this);
         }
 
-        this.children.forEach((c) => c._destroy());
+        this.children.forEach((c) => c.destroy());
     }
 
     toString(): string {

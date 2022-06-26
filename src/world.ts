@@ -92,39 +92,22 @@ export class World {
         });
     };
 
-    private toBeDestroyed: Entity[] = [];
-
-    queueDestroy(entity: Entity): void {
-        this.toBeDestroyed.push(entity);
+    destroy(entity: Entity): void {
+        entity.destroy();
     }
 
     checkAddOrRemove = (entity: Entity, s: System): boolean =>
         checkMask(entity.getComponentMask(), s.getExcludeMask()) &&
         checkMask(s.getAspectMask(), entity.getComponentMask());
 
-    updateRegistry(system: System, entity: Entity): void {
-        const addOrRemove = this.checkAddOrRemove(entity, system);
-        if (system.hasEntity(entity) && !addOrRemove) {
-            system.unregisterEntity(entity);
-        } else if (addOrRemove) {
-            system.registerEntity(entity);
-        }
-    }
-
-    onComponentAdded(componentName: string, entity: Entity): void {
-        this.systemComponentMap.get(componentName)?.forEach((s) => {
-            this.updateRegistry(s, entity);
-        });
-    }
-
-    onComponentRemoved(
-        componentName: string,
-        entity: Entity,
-        onRemove: () => void
-    ): void {
-        onRemove();
-        this.systemComponentMap.get(componentName)?.forEach((s) => {
-            this.updateRegistry(s, entity);
+    updateRegistry(componentName: string, entity: Entity): void {
+        this.systemComponentMap.get(componentName)?.forEach((system) => {
+            const addOrRemove = this.checkAddOrRemove(entity, system);
+            if (system.hasEntity(entity) && !addOrRemove) {
+                system.unregisterEntity(entity);
+            } else if (addOrRemove) {
+                system.registerEntity(entity);
+            }
         });
     }
 

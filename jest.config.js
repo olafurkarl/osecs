@@ -1,9 +1,0 @@
-// export default {
-//     testEnvironment: 'node',
-//     transform: {
-//         '^.+\\.ts?$': 'ts-jest'
-//     },
-//     testRegex: '(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$',
-//     testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/lib/'],
-//     moduleFileExtensions: ['ts', 'js']
-// };
