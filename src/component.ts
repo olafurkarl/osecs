@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Entity } from './entity';
 import { v4 as uuidv4 } from 'uuid';
+
+export type ComponentId = string;
 /**
  * Component that can be attached to entities.
  */
 export abstract class Component {
     private declare entity: Entity;
-    private id: string;
+    private id: ComponentId; // Don't know if I'll ever use this? TODO: remove
 
     constructor() {
         this.id = uuidv4();
@@ -62,6 +64,5 @@ export function RegisterComponent<
     // about how we deal with our masks since MAX_SAFE_INTEGER in JS is 2^53
     const componentMaskShift = Object.keys(ComponentMaskMap).length;
     const componentMask = 1 << componentMaskShift;
-
     ComponentMaskMap[keyName] = componentMask;
 }

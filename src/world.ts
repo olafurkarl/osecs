@@ -19,8 +19,8 @@ class WorldBuilder {
         return new WorldBuilder();
     }
 
-    withSystem<T extends { new (...args: never): any }>(systemClass: T) {
-        this.world.addSystem(new systemClass());
+    withSystem<T extends { new (...args: any): any }>(systemClass: T) {
+        this.world.addSystem(new systemClass(this.world));
         return this;
     }
 
@@ -38,82 +38,108 @@ class WorldBuilder {
     }
 }
 
+type ComponentName = string;
+
 export class World {
     private systems: System[] = [];
+    private systemComponentMap: Map<ComponentName, System[]> = new Map();
 
     static create(): WorldBuilder {
         return new WorldBuilder();
     }
 
+    validateSystem(system: System): void {
+        system.aspects().forEach((e) => {
+            if (
+                system
+                    .excludes()
+                    .map((f) => (f as any).name)
+                    .includes((e as any).name)
+            ) {
+                throw new Error(
+                    'System aspects must not contains any of its excludes'
+                );
+            }
+        });
+    }
+
+    addToSCMap(key: ComponentName, system: System): void {
+        if (!this.systemComponentMap.has(key)) {
+            this.systemComponentMap.set(key, [system]);
+        } else {
+            this.systemComponentMap.get(key)?.push(system);
+        }
+    }
+
+    mapAspectsAndExcludes(system: System): void {
+        system.aspects().forEach((a) => {
+            this.addToSCMap(a.name, system);
+        });
+        system.excludes().forEach((e) => {
+            this.addToSCMap(e.name, system);
+        });
+    }
+
     addSystem(system: System): void {
+        this.validateSystem(system);
+        this.mapAspectsAndExcludes(system);
         this.systems.push(system);
     }
 
     run = (delta: number): void => {
-        this.sync();
-
         this.systems.forEach((system: System) => {
             system.run(delta);
         });
     };
 
-    private dirtyAdded: Entity[] = [];
-    private dirtyRemoved = new Map<string, EntityCleanupRecord>();
+    private toBeDestroyed: Entity[] = [];
 
-    onComponentAdded(entity: Entity): void {
-        this.dirtyAdded.push(entity);
-    }
-
-    onComponentRemoved(record: EntityCleanupRecord): void {
-        const key = this.getCleanupKey(record);
-        if (!this.dirtyRemoved.has(key)) {
-            this.dirtyRemoved.set(key, record);
-        }
-    }
-
-    getCleanupKey(record: EntityCleanupRecord): string {
-        return record.entity.id + record.componentName;
-    }
-
-    sync(): void {
-        this.dirtyAdded.forEach(this.syncAdded);
-        this.dirtyAdded = [];
-        this.dirtyRemoved.forEach(this.syncRemoved);
-        this.dirtyRemoved.clear();
+    queueDestroy(entity: Entity): void {
+        this.toBeDestroyed.push(entity);
     }
 
     checkAddOrRemove = (entity: Entity, s: System): boolean =>
         checkMask(entity.getComponentMask(), s.getExcludeMask()) &&
         checkMask(s.getAspectMask(), entity.getComponentMask());
 
-    syncAdded = (entity: Entity): void => {
-        this.systems.forEach((s) => {
-            const addOrRemove = this.checkAddOrRemove(entity, s);
-            if (s.hasEntity(entity) && !addOrRemove) {
-                s.unregisterEntity(entity);
-            } else if (addOrRemove) {
-                s.registerEntity(entity);
-            }
-        });
-    };
+    updateRegistry(system: System, entity: Entity): void {
+        const addOrRemove = this.checkAddOrRemove(entity, system);
+        if (system.hasEntity(entity) && !addOrRemove) {
+            system.unregisterEntity(entity);
+        } else if (addOrRemove) {
+            system.registerEntity(entity);
+        }
+    }
 
-    syncRemoved = ({
-        entity,
-        componentName,
-        onRemove
-    }: EntityCleanupRecord): void => {
+    onComponentAdded(componentName: string, entity: Entity): void {
+        this.systemComponentMap.get(componentName)?.forEach((s) => {
+            this.updateRegistry(s, entity);
+        });
+    }
+
+    onComponentRemoved(
+        componentName: string,
+        entity: Entity,
+        onRemove: () => void
+    ): void {
         onRemove();
-        this.systems
-            .filter(
-                (s) =>
-                    // Every system that doesn't match the flag, but still has the entity
-                    !checkMask(s.getAspectMask(), entity.getComponentMask()) &&
-                    s.hasEntity(entity) &&
-                    s.hasAspect(componentName)
-            )
-            .forEach((s) => {
-                s.unregisterEntity(entity);
-            });
+        this.systemComponentMap.get(componentName)?.forEach((s) => {
+            this.updateRegistry(s, entity);
+        });
+    }
+
+    syncRemoved = (
+        system: System,
+        { entity, componentName, onRemove }: EntityCleanupRecord
+    ): void => {
+        onRemove();
+        if (
+            !checkMask(system.getAspectMask(), entity.getComponentMask()) &&
+            system.hasEntity(entity) &&
+            system.hasAspect(componentName)
+        ) {
+            system.unregisterEntity(entity);
+        }
     };
 
     /**
@@ -121,7 +147,7 @@ export class World {
      */
     getSystem<T extends { new (...args: never): System }>(
         componentClass: T
-    ): T {
+    ): InstanceType<T> {
         return this.systems.filter(
             (s) => s.constructor.name === componentClass.name
         )[0] as InstanceType<T>;

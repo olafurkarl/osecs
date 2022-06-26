@@ -3,16 +3,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { Component, ComponentMaskMap } from './component';
 import { World } from './world';
 
+export type EntityId = string;
+
 /**
  * A base class from which all game entities derive, supports adding and removing {@link Component | Components}
  */
 export class Entity {
-    public id: string;
+    public id: EntityId;
     public active = true;
 
     private components: Map<string, Component>;
     private parent: Entity | undefined;
-    private children: Entity[] = [];
+    private children: Map<string, Entity>;
     public name = 'unknown';
     private world: World;
 
@@ -21,19 +23,25 @@ export class Entity {
     private cleanupCallbacks: { (): void }[] = [];
 
     constructor(world: World, name?: string) {
-        this.id = uuidv4();
-        this.components = new Map<string, Component>();
+        this.id = uuidv4().split('-')[0];
+        this.components = new Map<EntityId, Component>();
         this.world = world;
+        this.children = new Map<EntityId, Entity>();
         if (name) {
             this.name = name;
         }
     }
 
-    addComponent(component: Component): void {
-        this.components.set(component.constructor.name, component);
-        this.world.onComponentAdded(this);
+    addComponent<T extends Component>(
+        component: T,
+        ...args: Parameters<T['init']>
+    ): void {
+        component.init(...args);
 
+        this.components.set(component.constructor.name, component);
         this.componentMask |= ComponentMaskMap[component.constructor.name];
+
+        this.world.onComponentAdded(component.constructor.name, this);
     }
 
     /**
@@ -92,11 +100,7 @@ export class Entity {
                 this.components.get(componentName)?.onComponentRemoved();
                 this.components.delete(componentName);
             };
-            this.world.onComponentRemoved({
-                entity: this,
-                componentName: componentName,
-                onRemove: removeCallback
-            });
+            this.world.onComponentRemoved(componentName, this, removeCallback);
 
             this.componentMask &= ~ComponentMaskMap[componentName];
         }
@@ -106,22 +110,21 @@ export class Entity {
     }
 
     addChild(entity: Entity): void {
-        this.children.push(entity);
+        this.children.set(entity.id, entity);
     }
 
-    // todo: not performant. probably good to switch to a map or something.
     removeChild(entity: Entity): void {
-        this.children = this.children.filter((c) => c.id !== entity.id);
+        this.children.delete(entity.id);
     }
 
     getChildren(): Entity[] {
-        return this.children;
+        return Array.from(this.children.values());
     }
 
     getChildrenWithComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): Entity[] {
-        return this.children.filter((child) =>
+        return Array.from(this.children.values()).filter((child) =>
             child.hasComponent(componentClass)
         );
     }
@@ -143,7 +146,11 @@ export class Entity {
         this.cleanupCallbacks.push(callback);
     }
 
-    destroy(): void {
+    queueDestroy(): void {
+        this.world.queueDestroy(this);
+    }
+
+    _destroy(): void {
         this.components.forEach((c) => {
             this.removeComponentByName(c.constructor.name);
         });
@@ -156,7 +163,7 @@ export class Entity {
             this.parent.removeChild(this);
         }
 
-        this.children.forEach((c) => c.destroy());
+        this.children.forEach((c) => c._destroy());
     }
 
     toString(): string {
@@ -179,15 +186,13 @@ export class EntityBuilder {
         this.entity = new Entity(world, name);
     }
 
-    withComponent(
-        component: Component,
-        args?: Object | undefined
+    withComponent<T extends Component>(
+        component: T,
+        ...args: Parameters<T['init']>
     ): EntityBuilder {
-        // set entity
         component.setEntity(this.entity);
-        // call init after entity has been set
-        component.init();
-        this.entity.addComponent(component);
+
+        this.entity.addComponent(component, ...args);
         return this;
     }
     withChild(entity: Entity): EntityBuilder {
