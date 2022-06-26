@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
+import { Aspect } from './aspect';
 import { Component, ComponentName } from './component';
 import { Mask } from './mask';
 import { Query, QueryId } from './query';
@@ -148,11 +149,11 @@ export class Entity {
         return Array.from(this.children.values());
     }
 
-    getChildrenWithComponent<T extends { new (...args: never): Component }>(
-        componentClass: T
-    ): Entity[] {
-        return Array.from(this.children.values()).filter((child) =>
-            child.hasComponent(componentClass)
+    getChildrenByQuery(aspects: Aspect[]): Entity[] {
+        const query = new Query(aspects);
+        return Array.from(this.children.values()).filter(
+            (child) =>
+                query.checkIncludeMask(child) && query.checkExcludeMask(child)
         );
     }
 
@@ -196,10 +197,15 @@ export class Entity {
 
     toString(): string {
         const components = this.getComponentNames();
-        components.toString = function () {
-            return this.join('; ');
-        };
-        return `${this.name} entity, id:\n ${this.id},\n components:\n ${components}`;
+
+        let componentString = '';
+        components.forEach((c) => (componentString += `<li>${c}</li>`));
+        let string = `<p>${this.name} entity id: ${this.id}</p> components:<ul>${componentString}<ul>`;
+        Array.from(this.children.values()).forEach(
+            (c) =>
+                (string += `<div style="text-indent: 5px">${c.toString()}</div>`)
+        );
+        return string;
     }
 }
 
