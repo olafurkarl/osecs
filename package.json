@@ -1,6 +1,6 @@
 {
   "name": "osecs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Oli's Simple ECS",
   "main": "./src/index.ts",
   "scripts": {
