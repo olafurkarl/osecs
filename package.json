@@ -1,12 +1,14 @@
 {
   "name": "osecs",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "Oli's Simple ECS",
-  "main": "./src/index.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest --env=node --colors --coverage test",
-    "lint": "eslint src --fix --ext .ts"
+    "lint": "eslint src --fix --ext .ts",
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
@@ -15,7 +17,7 @@
   "author": "Olafur Karl Stefansson",
   "license": "ISC",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./dist/src/index.js",
     "./perf.js": "./dist/src/index.js"
   },
   "dependencies": {
