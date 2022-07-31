@@ -131,6 +131,7 @@ export class Entity {
             );
         }
     }
+
     equals(other: Entity): boolean {
         return this.id === other.id;
     }
