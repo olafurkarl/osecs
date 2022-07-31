@@ -5,26 +5,36 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest --env=node --colors --coverage test"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:olafurkarl/osecs.git"
+    "url": "git+ssh://git@github.com/olafurkarl/osecs.git"
   },
-  "author": "Ólafur Karl Stefánsson",
+  "author": "Olafur Karl Stefansson",
   "license": "ISC",
   "exports": {
     ".": "./src/index.ts",
     "./perf.js": "./dist/src/index.js"
   },
   "dependencies": {
+    "jest": "^28.1.3",
     "rollup": "^2.61.1",
+    "ts-jest": "^28.0.7",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/node": "^17.0.2",
-    "jest": "^27.4.5",
+    "@types/uuid": "^8.3.4",    
+    "@types/jest": "^28.1.6",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-ts": "^2.0.4"
+  },
+  "bugs": {
+    "url": "https://github.com/olafurkarl/osecs/issues"
+  },
+  "homepage": "https://github.com/olafurkarl/osecs#readme",
+  "directories": {
+    "test": "tests"
   }
 }
