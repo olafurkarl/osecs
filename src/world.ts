@@ -1,5 +1,5 @@
 import { System } from './system';
-import { Entity, EntityBuilder } from './entity';
+import { Entity, EntityBuilder, EntityId } from './entity';
 import { Query } from './query';
 
 class WorldBuilder {
@@ -37,9 +37,14 @@ type ComponentName = string;
 export class World {
     private systems: System[] = [];
     private queryRegistry: Map<ComponentName, Query[]> = new Map();
+    private entities: Map<EntityId, Entity> = new Map();
 
     static create(): WorldBuilder {
         return new WorldBuilder();
+    }
+
+    public getEntityById(id: EntityId) {
+        return this.entities.get(id);
     }
 
     /**
@@ -81,6 +86,10 @@ export class World {
             system.run(delta);
         });
     };
+
+    mapEntity(entity: Entity) {
+        this.entities.set(entity.id, entity);
+    }
 
     updateRegistry(componentName: string, entity: Entity): void {
         /**

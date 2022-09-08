@@ -295,30 +295,55 @@ export class Entity {
 }
 
 export class EntityBuilder {
-    private readonly entity: Entity;
+    private world: World;
+    private name: string | undefined;
+    private componentRecipes: Array<{
+        constructor: { new (): unknown };
+        args: unknown[];
+    }> = [];
+    private children: Entity[] = [];
 
     static create(world: World, name?: string): EntityBuilder {
         return new EntityBuilder(world, name);
     }
 
     constructor(world: World, name?: string) {
-        this.entity = new Entity(world, name);
+        this.world = world;
+        this.name = name;
+    }
+
+    with<T extends Component>(
+        componentConstuctor: { new (): T },
+        ...args: Parameters<T['setValues']>
+    ): EntityBuilder {
+        return this.withComponent(componentConstuctor, ...args);
     }
 
     withComponent<T extends Component>(
         componentConstuctor: { new (): T },
         ...args: Parameters<T['setValues']>
     ): EntityBuilder {
-        const component = new componentConstuctor();
-        this.entity.addComponent(component, ...args);
+        this.componentRecipes.push({
+            constructor: componentConstuctor,
+            args: args
+        });
         return this;
     }
 
     withChild(entity: Entity): EntityBuilder {
-        this.entity.addChild(entity);
+        this.children.push(entity);
         return this;
     }
+
     build(): Entity {
-        return this.entity;
+        const entity = new Entity(this.world, this.name);
+        this.children.forEach((child) => {
+            entity.addChild(child);
+        });
+        this.componentRecipes.forEach(({ constructor, args }) => {
+            const component = new constructor();
+            entity.addComponent<any>(component, ...args);
+        });
+        return entity;
     }
 }

@@ -5,7 +5,7 @@ import {
     ParentWithoutAspect,
     WithoutAspect
 } from './aspect';
-import { Entity } from './entity';
+import { Entity, EntityId } from './entity';
 import { v4 as uuidv4 } from 'uuid';
 import { Mask } from './mask';
 
@@ -21,7 +21,7 @@ export class Query {
     private declare _parentMask: Mask;
     private declare _parentExcludeMask: Mask;
 
-    private _entities: Map<string, Entity>;
+    private _entities: Map<EntityId, Entity>;
 
     constructor(aspects: Aspect[]) {
         this._aspects = aspects;
