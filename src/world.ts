@@ -1,6 +1,5 @@
 import { System } from './system';
 import { Entity, EntityBuilder } from './entity';
-import { ParentHasAspect } from './aspect';
 import { Query } from './query';
 
 class WorldBuilder {

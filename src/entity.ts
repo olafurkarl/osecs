@@ -51,6 +51,21 @@ export class Entity {
         });
     }
 
+    /**
+     * Alias for {@link upsertComponent}
+     */
+    upsert<T extends Component>(
+        component: T,
+        ...args: Parameters<T['setValues']>
+    ): void {
+        this.upsertComponent(component, ...args);
+    }
+
+    /**
+     * Add or update a given component
+     * @param component Component to update
+     * @param args Values to set on component
+     */
     upsertComponent<T extends Component>(
         component: T,
         ...args: Parameters<T['setValues']>
@@ -60,6 +75,15 @@ export class Entity {
         } else {
             this.components.get(component.constructor.name)?.setValues(...args);
         }
+    }
+
+    /**
+     * Alias for {@link getOrInheritComponent}
+     */
+    inherit<T extends { new (...args: never): Component }>(
+        componentClass: T
+    ): InstanceType<T> {
+        return this.getOrInheritComponent(componentClass);
     }
 
     /**
@@ -83,6 +107,20 @@ export class Entity {
         return component;
     }
 
+    /**
+     * Alias for {@link getComponent}
+     */
+    get<T extends { new (...args: never): Component }>(
+        componentClass: T
+    ): InstanceType<T> {
+        return this.getComponent(componentClass);
+    }
+
+    /**
+     * Gets a component from the entity by class
+     * @param componentClass Class of component to get
+     * @returns Component instance
+     */
     getComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): InstanceType<T> {
@@ -97,6 +135,20 @@ export class Entity {
         return this._componentMask;
     }
 
+    /**
+     * Alias for {@link hasComponent}
+     */
+    has<T extends { new (...args: never): Component }>(
+        componentClass: T | Component
+    ): boolean {
+        return this.hasComponent(componentClass);
+    }
+
+    /**
+     * Check if an entity has a component.
+     * @param componentClass Component class to check
+     * @returns boolean true/false depending on whether the component is on the entity
+     */
     hasComponent<T extends { new (...args: never): Component }>(
         componentClass: T | Component
     ): boolean {
@@ -106,6 +158,19 @@ export class Entity {
         return this.components.has(componentClass.name);
     }
 
+    /**
+     * Alias for {@link removeComponent}
+     */
+    remove<T extends { new (...args: never): Component }>(
+        componentClass: T
+    ): void {
+        this.removeComponent(componentClass);
+    }
+
+    /**
+     * Removes a component from entity by class
+     * @param componentClass Component class to remove
+     */
     removeComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): void {
@@ -132,6 +197,9 @@ export class Entity {
         }
     }
 
+    /**
+     * Check whether this entity is the same as passed entity
+     */
     equals(other: Entity): boolean {
         return this.id === other.id;
     }
