@@ -1,6 +1,6 @@
 {
   "name": "osecs",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Oli's Simple ECS",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -8,7 +8,7 @@
     "build": "tsc",
     "test": "jest --env=node --colors --coverage test",
     "lint": "eslint src --fix --ext .ts",
-    "prepublish": "tsc"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
