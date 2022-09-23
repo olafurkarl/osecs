@@ -13,6 +13,7 @@ export type EntityId = string;
 export class Entity {
     public id: EntityId;
     public name = 'unknown';
+    public alive = true;
 
     private world: World;
     private _componentMask: Mask;
@@ -123,6 +124,7 @@ export class Entity {
         if (componentClass instanceof Component) {
             return this.components.has(componentClass.constructor.name);
         }
+
         return this.components.has(componentClass.name);
     }
 
@@ -187,6 +189,12 @@ export class Entity {
             q.unregisterEntity(this);
         });
 
+        this.alive = false;
+
+        this.world.markDeadEntity(this);
+    }
+
+    purge(): void {
         this.components.forEach((c) => {
             this.removeComponentByName(c.constructor.name);
         });

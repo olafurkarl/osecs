@@ -39,6 +39,8 @@ export class World {
     private queryRegistry: Map<ComponentName, Query[]> = new Map();
     private allQueries: Array<Query> = [];
     private entities: Map<EntityId, Entity> = new Map();
+    private deadEntities: Array<Entity> = [];
+    private entitiesToBePurged: Array<Entity> = [];
 
     static create(): WorldBuilder {
         return new WorldBuilder();
@@ -117,6 +119,18 @@ export class World {
 
     spawnEntity(name?: string): EntityBuilder {
         return EntityBuilder.create(this, name);
+    }
+
+    processGraveyard() {
+        this.entitiesToBePurged.forEach((entity) => {
+            entity.purge();
+        });
+        this.entitiesToBePurged = this.deadEntities.slice();
+        this.deadEntities.length = 0;
+    }
+
+    markDeadEntity(entity: Entity) {
+        this.deadEntities.push(entity);
     }
 
     /**

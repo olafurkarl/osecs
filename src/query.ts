@@ -134,6 +134,8 @@ export class Query {
      * @param entity Entity to add
      */
     registerEntity(entity: Entity): void {
+        this.nextAdded.push(entity);
+
         if (!this.hasEntity(entity)) {
             this._entities.set(entity.id, entity);
             entity.registerQuery(this);
@@ -145,6 +147,7 @@ export class Query {
      * @param entity Entity to remove
      */
     unregisterEntity(entity: Entity): void {
+        this.nextRemoved.push(entity);
         this._entities.delete(entity.id);
         entity.unregisterQuery(this);
     }
@@ -159,10 +162,8 @@ export class Query {
         const registerThisEntity = this.shouldRegisterEntity(entity);
 
         if (this.hasEntity(entity) && !registerThisEntity) {
-            this.nextRemoved.push(entity);
             this.unregisterEntity(entity);
         } else if (registerThisEntity) {
-            this.nextAdded.push(entity);
             this.registerEntity(entity);
         }
     };
