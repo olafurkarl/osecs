@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import { Aspect } from './aspect';
 import { Component, ComponentName } from './component';
 import { Mask } from './mask';
 import { Query, QueryId } from './query';
@@ -15,20 +14,17 @@ export class Entity {
     public id: EntityId;
     public name = 'unknown';
 
-    private _parent: Entity | undefined;
     private world: World;
     private _componentMask: Mask;
-    private cleanupCallbacks: { (): void }[] = [];
+    private cleanupCallbacks: { (entity: Entity): void }[] = [];
 
     private components: Map<ComponentName, Component>;
-    private children: Map<EntityId, Entity>;
     private currentQueries = new Map<QueryId, Query>();
 
     constructor(world: World, name?: string) {
         this.id = uuidv4().split('-')[0];
-        this.components = new Map<EntityId, Component>();
+        this.components = new Map<ComponentName, Component>();
         this.world = world;
-        this.children = new Map<EntityId, Entity>();
         this._componentMask = new Mask();
         if (name) {
             this.name = name;
@@ -36,26 +32,24 @@ export class Entity {
     }
 
     addComponent<T extends Component>(
-        component: T,
+        component: { new (): T },
         ...args: Parameters<T['setValues']>
     ): void {
-        component.setEntity(this);
-        component.setValues(...args);
+        const componentInstance = new component();
+        componentInstance.setEntity(this);
+        componentInstance.setValues(...args);
 
-        this.components.set(component.constructor.name, component);
-        this._componentMask.flipOn(component.componentId - 1);
+        this.components.set(component.name, componentInstance);
+        this._componentMask.flipOn(componentInstance.componentId - 1);
 
-        this.world.updateRegistry(component.constructor.name, this);
-        this.children.forEach((child) => {
-            this.world.updateRegistry(component.constructor.name, child);
-        });
+        this.world.updateRegistry(componentInstance.constructor.name, this);
     }
 
     /**
      * Alias for {@link upsertComponent}
      */
     upsert<T extends Component>(
-        component: T,
+        component: { new (): T },
         ...args: Parameters<T['setValues']>
     ): void {
         this.upsertComponent(component, ...args);
@@ -67,7 +61,7 @@ export class Entity {
      * @param args Values to set on component
      */
     upsertComponent<T extends Component>(
-        component: T,
+        component: { new (): T },
         ...args: Parameters<T['setValues']>
     ): void {
         if (!this.hasComponent(component)) {
@@ -75,36 +69,6 @@ export class Entity {
         } else {
             this.components.get(component.constructor.name)?.setValues(...args);
         }
-    }
-
-    /**
-     * Alias for {@link getOrInheritComponent}
-     */
-    inherit<T extends { new (...args: never): Component }>(
-        componentClass: T
-    ): InstanceType<T> {
-        return this.getOrInheritComponent(componentClass);
-    }
-
-    /**
-     * Finds and return a given component on this entity, or any parent entity
-     * @param componentClass Component to fetch
-     * @returns Component instance
-     */
-    getOrInheritComponent<T extends { new (...args: never): Component }>(
-        componentClass: T
-    ): InstanceType<T> {
-        let component = this.getComponent(componentClass);
-
-        if (!component && this._parent) {
-            component = this._parent.getOrInheritComponent(componentClass);
-        }
-        if (!component) {
-            throw new Error(
-                `getOrInheritComponent: Component: ${componentClass.name} not found on Entity (name: ${this.name}; id: ${this.id})`
-            );
-        }
-        return component;
     }
 
     /**
@@ -187,9 +151,6 @@ export class Entity {
             this.components.delete(componentName);
 
             this.world.updateRegistry(componentName, this);
-            this.children.forEach((child) => {
-                this.world.updateRegistry(componentName, child);
-            });
         } else {
             console.log(
                 `${this.name} tried to remove ${componentName} but did not have it.`
@@ -212,48 +173,7 @@ export class Entity {
         this.currentQueries.delete(query.id);
     }
 
-    addChild(entity: Entity): void {
-        this.children.set(entity.id, entity);
-        entity._parent = this;
-
-        this.getComponentNames().forEach((cn) => {
-            this.world.updateRegistry(cn, entity);
-        });
-        entity.getComponentNames().forEach((cn) => {
-            this.world.updateRegistry(cn, entity);
-        });
-    }
-
-    removeChild(entity: Entity): void {
-        this.children.delete(entity.id);
-    }
-
-    getChildren(): Entity[] {
-        return Array.from(this.children.values());
-    }
-
-    getChildrenByQuery(aspects: Aspect[]): Entity[] {
-        const query = new Query(aspects);
-        return Array.from(this.children.values()).filter(
-            (child) =>
-                query.checkIncludeMask(child) && query.checkExcludeMask(child)
-        );
-    }
-
-    hasParent(): boolean {
-        return !!this._parent;
-    }
-
-    get parent(): Entity {
-        if (!this._parent) {
-            throw new Error(
-                "Entity tried to fetch it's parent entity, but none was found"
-            );
-        }
-        return this._parent;
-    }
-
-    addCleanupCallback(callback: () => void): void {
+    addCleanupCallback(callback: (entity: Entity) => void): void {
         this.cleanupCallbacks.push(callback);
     }
 
@@ -268,40 +188,22 @@ export class Entity {
         });
 
         this.cleanupCallbacks.forEach((cb) => {
-            cb();
+            cb(this);
         });
-
-        if (this._parent) {
-            this._parent.removeChild(this);
-        }
-
-        this.children.forEach((c) => c.destroy());
-    }
-
-    toString(): string {
-        const components = Array.from(this.components.values());
-
-        let componentString = '';
-        components.forEach(
-            (c) => (componentString += `<li>${c.toString()}</li>`)
-        );
-        let string = `<p>${this.name} entity id: ${this.id}</p> components:<ul>${componentString}<ul>`;
-        Array.from(this.children.values()).forEach(
-            (c) =>
-                (string += `<div style="text-indent: 5px">${c.toString()}</div>`)
-        );
-        return string;
     }
 }
 
-export class EntityBuilder {
+export interface IEntityBuilder {
+    build(): Entity;
+}
+
+export class EntityBuilder implements IEntityBuilder {
     private world: World;
     private name: string | undefined;
     private componentRecipes: Array<{
         constructor: { new (): unknown };
         args: unknown[];
     }> = [];
-    private children: Entity[] = [];
 
     static create(world: World, name?: string): EntityBuilder {
         return new EntityBuilder(world, name);
@@ -330,19 +232,11 @@ export class EntityBuilder {
         return this;
     }
 
-    withChild(entity: Entity): EntityBuilder {
-        this.children.push(entity);
-        return this;
-    }
-
     build(): Entity {
         const entity = new Entity(this.world, this.name);
-        this.children.forEach((child) => {
-            entity.addChild(child);
-        });
         this.componentRecipes.forEach(({ constructor, args }) => {
-            const component = new constructor();
-            entity.addComponent<any>(component, ...args);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            entity.addComponent<any>(constructor, ...args);
         });
         return entity;
     }

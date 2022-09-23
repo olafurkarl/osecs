@@ -1,10 +1,4 @@
-import {
-    Aspect,
-    HasAspect,
-    ParentHasAspect,
-    ParentWithoutAspect,
-    WithoutAspect
-} from './aspect';
+import { Aspect, HasAspect, WithoutAspect } from './aspect';
 import { Entity, EntityId } from './entity';
 import { v4 as uuidv4 } from 'uuid';
 import { Mask } from './mask';
@@ -18,8 +12,6 @@ export class Query {
 
     private declare _includeMask: Mask;
     private declare _excludeMask: Mask;
-    private declare _parentMask: Mask;
-    private declare _parentExcludeMask: Mask;
 
     private _entities: Map<EntityId, Entity>;
 
@@ -42,23 +34,15 @@ export class Query {
         return this._excludeMask;
     }
 
-    get parentIncludeMask(): Mask {
-        return this._parentMask;
-    }
-
     get entities(): Map<string, Entity> {
         return this._entities;
     }
 
     initializeMasks(): void {
         this._includeMask = new Mask();
-        this._parentMask = new Mask();
 
         this._excludeMask = new Mask();
         this._excludeMask.flipAllToOne();
-
-        this._parentExcludeMask = new Mask();
-        this._parentExcludeMask.flipAllToOne();
 
         this.aspects.forEach((aspect) => {
             switch (aspect.constructor) {
@@ -72,31 +56,14 @@ export class Query {
                     this._excludeMask.enable();
                     break;
                 }
-                case ParentHasAspect: {
-                    this._parentMask.flipOn(aspect.bitFlag);
-                    this._parentMask.enable();
-                    break;
-                }
-                case ParentWithoutAspect: {
-                    this._parentExcludeMask.flipOff(aspect.bitFlag);
-                    this._parentExcludeMask.enable();
-                    break;
-                }
             }
         });
 
         if (this._includeMask.empty) {
             this._includeMask.flipAllToOne();
         }
-        if (this._parentMask.empty) {
-            this._parentMask.flipAllToOne();
-        }
 
-        if (
-            !this._parentMask.enabled &&
-            !this._includeMask.enabled &&
-            (this._excludeMask.enabled || this._parentExcludeMask.enabled)
-        ) {
+        if (!this._includeMask.enabled && this._excludeMask.enabled) {
             throw new Error(
                 'Query with only Without aspects not supported, add an inclusive aspect to the query.'
             );
@@ -110,16 +77,6 @@ export class Query {
     checkExcludeMask = (entity: Entity): boolean =>
         !this._excludeMask.enabled ||
         this._excludeMask.fulfills(entity.componentMask);
-
-    checkParentMask = (entity: Entity): boolean =>
-        !this._parentMask.enabled ||
-        (entity.hasParent() &&
-            this._parentMask.fulfilledBy(entity.parent.componentMask));
-
-    checkParentExcludeMask = (entity: Entity): boolean =>
-        !this._parentExcludeMask.enabled ||
-        (entity.hasParent() &&
-            this._parentExcludeMask.fulfills(entity.parent.componentMask));
 
     /**
      * Check whether an entity is currently being tracked by this query
@@ -152,15 +109,8 @@ export class Query {
 
     shouldRegisterEntity(entity: Entity) {
         const doesInclude = this.checkIncludeMask(entity);
-        const doesParentInclude = this.checkParentMask(entity);
         const doesntExclude = this.checkExcludeMask(entity);
-        const doesntParentExclude = this.checkParentExcludeMask(entity);
-        return (
-            doesInclude &&
-            doesParentInclude &&
-            doesntExclude &&
-            doesntParentExclude
-        );
+        return doesInclude && doesntExclude;
     }
 
     /**

@@ -12,8 +12,6 @@ export class Aspect {
 
 export class HasAspect extends Aspect {}
 export class WithoutAspect extends Aspect {}
-export class ParentHasAspect extends Aspect {}
-export class ParentWithoutAspect extends Aspect {}
 
 export const Has = <T extends { new (...args: never): Component }>(
     component: T
@@ -25,16 +23,4 @@ export const Without = <T extends { new (...args: never): Component }>(
     component: T
 ): Aspect => {
     return new WithoutAspect(component);
-};
-
-export const ParentHas = <T extends { new (...args: never): Component }>(
-    component: T
-): Aspect => {
-    return new ParentHasAspect(component);
-};
-
-export const ParentWithout = <T extends { new (...args: never): Component }>(
-    component: T
-): Aspect => {
-    return new ParentWithoutAspect(component);
 };

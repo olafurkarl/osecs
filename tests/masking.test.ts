@@ -6,9 +6,7 @@ import {
     Has,
     World,
     EntityBuilder,
-    Without,
-    ParentHas,
-    ParentWithout
+    Without
 } from '../src/index';
 import { Mask } from '../src/mask';
 import { Query } from '../src/query';
@@ -33,10 +31,6 @@ class TestSystem extends System {
 
     public get excludeMask() {
         return this.testQuery.excludeMask.mask;
-    }
-
-    public get parentIncludeMask() {
-        return this.testQuery.parentIncludeMask.mask;
     }
 
     run(): void {
@@ -103,19 +97,6 @@ describe('Masking', () => {
         );
     });
 
-    it('gets the correct system parent include mask', () => {
-        const testSystem01 = setupSystem([ParentHas(ATestComponent)]);
-        const testSystem10 = setupSystem([ParentHas(BTestComponent)]);
-        const testSystem11 = setupSystem([
-            ParentHas(ATestComponent),
-            ParentHas(BTestComponent)
-        ]);
-
-        expect(testSystem01.parentIncludeMask[0]).toEqual(0b01);
-        expect(testSystem10.parentIncludeMask[0]).toEqual(0b10);
-        expect(testSystem11.parentIncludeMask[0]).toEqual(0b11);
-    });
-
     it('gets entity if it has the same aspect mask', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
         const world = World.create().withSystem(TestSystemA).build();
@@ -177,7 +158,7 @@ describe('Masking', () => {
             .build();
         world.run();
 
-        entity.addComponent(new BTestComponent());
+        entity.addComponent(BTestComponent);
 
         world.run();
 
@@ -269,140 +250,6 @@ describe('Masking', () => {
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(0);
-    });
-
-    it('does not match entity by its parent mask directly', () => {
-        const TestSystemA = setupSystemType([ParentHas(ATestComponent)]);
-        const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world).withComponent(ATestComponent).build();
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(0);
-    });
-
-    it('gets entity if its parent has same aspect mask', () => {
-        const TestSystemA = setupSystemType([ParentHas(ATestComponent)]);
-        const world = World.create().withSystem(TestSystemA).build();
-        const entity = EntityBuilder.create(world)
-            .withComponent(ATestComponent)
-            .withChild(EntityBuilder.create(world).build())
-            .build();
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(1);
-        expect(testSystemInst.getEntities()[0].equals(entity)).toEqual(false);
-    });
-
-    it('gets entity if its parent has the right mask and child has the right aspect mask', () => {
-        const TestSystemA = setupSystemType([
-            Has(ATestComponent),
-            ParentHas(BTestComponent)
-        ]);
-        const world = World.create().withSystem(TestSystemA).build();
-        const entity = EntityBuilder.create(world)
-            .withComponent(BTestComponent)
-            .withChild(
-                EntityBuilder.create(world)
-                    .withComponent(ATestComponent)
-                    .build()
-            )
-            .build();
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(1);
-        expect(testSystemInst.getEntities()[0].equals(entity)).toEqual(false);
-    });
-
-    it('gets entity if its parent has the right mask and child has the right aspect mask, even if child is added later', () => {
-        const TestSystemA = setupSystemType([
-            Has(ATestComponent),
-            ParentHas(BTestComponent)
-        ]);
-        const world = World.create().withSystem(TestSystemA).build();
-        const entity = EntityBuilder.create(world)
-            .withComponent(BTestComponent)
-            .build();
-        const child = EntityBuilder.create(world)
-            .withComponent(ATestComponent)
-            .build();
-        entity.addChild(child);
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(1);
-        expect(testSystemInst.getEntities()[0].equals(entity)).toEqual(false);
-    });
-
-    it('does not get entity if its parent has the right mask and child has the wrong aspect mask', () => {
-        const TestSystemA = setupSystemType([
-            Has(ATestComponent),
-            ParentHas(BTestComponent)
-        ]);
-        const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world)
-            .withComponent(BTestComponent)
-            .withChild(EntityBuilder.create(world).build())
-            .build();
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(0);
-    });
-
-    it('parent exclude query doesnt include entity if parent is missing component', () => {
-        const TestSystemA = setupSystemType([
-            Has(CTestComponent),
-            ParentWithout(ATestComponent)
-        ]);
-        const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world, 'parent')
-            .withComponent(ATestComponent)
-            .withChild(
-                EntityBuilder.create(world, 'child')
-                    .withComponent(CTestComponent)
-                    .build()
-            )
-            .build();
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(0);
-    });
-
-    it('parent exclude query doesnt exclude entity if parent doesnt have component excluded in query', () => {
-        const TestSystemA = setupSystemType([
-            Has(CTestComponent),
-            ParentWithout(ATestComponent)
-        ]);
-        const world = World.create().withSystem(TestSystemA).build();
-        EntityBuilder.create(world, 'parent')
-            .withChild(
-                EntityBuilder.create(world, 'child')
-                    .withComponent(CTestComponent)
-                    .build()
-            )
-            .build();
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(1);
-    });
-
-    it('parent has query works with regular has query', () => {
-        const TestSystemA = setupSystemType([
-            Has(CTestComponent),
-            Has(BTestComponent),
-            ParentHas(ATestComponent)
-        ]);
-        const world = World.create().withSystem(TestSystemA).build();
-        const parent = EntityBuilder.create(world, 'parent')
-            .withChild(
-                EntityBuilder.create(world, 'child')
-                    .withComponent(CTestComponent)
-                    .withComponent(BTestComponent)
-                    .build()
-            )
-            .build();
-        parent.addComponent(new ATestComponent());
-        world.run();
-        const testSystemInst = world.getSystem(TestSystemA);
-        expect(testSystemInst.getEntities().length).toEqual(1);
     });
 });
 
