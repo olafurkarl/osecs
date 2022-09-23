@@ -10,7 +10,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "isolatedModules": true,
+    "isolatedModules": false,
     "noEmit": false,
     "composite": true,
     "skipLibCheck": true,
@@ -18,7 +18,7 @@
     "declaration": true,
     "outDir": "dist",
   },
-  "include": ["./src"],
+  "include": ["./src", "./tests"],
   "exclude": [
     "node_modules",
     "dist"

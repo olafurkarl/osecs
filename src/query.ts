@@ -5,6 +5,11 @@ import { Mask } from './mask';
 
 export type QueryId = string;
 
+type ChangeSet = {
+    added: Array<Entity>;
+    removed: Array<Entity>;
+};
+
 export class Query {
     public id: QueryId;
 
@@ -15,11 +20,48 @@ export class Query {
 
     private _entities: Map<EntityId, Entity>;
 
+    private currentChangeSet: 0 | 1 = 0;
+    private changeSets: [ChangeSet, ChangeSet] = [
+        {
+            added: [],
+            removed: []
+        },
+        {
+            added: [],
+            removed: []
+        }
+    ];
+
     constructor(aspects: Aspect[]) {
         this._aspects = aspects;
         this.initializeMasks();
         this._entities = new Map<string, Entity>();
         this.id = uuidv4();
+    }
+
+    get nextChangeSetIndex(): 0 | 1 {
+        // 0 becomes 1, 1 becomes 0
+        return ((this.currentChangeSet + 1) % 2) as 0 | 1;
+    }
+
+    get added() {
+        return this.changeSets[this.currentChangeSet].added;
+    }
+
+    get removed() {
+        return this.changeSets[this.currentChangeSet].removed;
+    }
+
+    get nextAdded() {
+        return this.changeSets[this.nextChangeSetIndex].added;
+    }
+
+    get nextRemoved() {
+        return this.changeSets[this.nextChangeSetIndex].removed;
+    }
+
+    get current() {
+        return Array.from(this._entities.values());
     }
 
     get aspects() {
@@ -113,6 +155,18 @@ export class Query {
         return doesInclude && doesntExclude;
     }
 
+    updateRegistry = (entity: Entity) => {
+        const registerThisEntity = this.shouldRegisterEntity(entity);
+
+        if (this.hasEntity(entity) && !registerThisEntity) {
+            this.nextRemoved.push(entity);
+            this.unregisterEntity(entity);
+        } else if (registerThisEntity) {
+            this.nextAdded.push(entity);
+            this.registerEntity(entity);
+        }
+    };
+
     /**
      * Just for convenience / syntactic sugar
      */
@@ -125,4 +179,10 @@ export class Query {
     ) {
         this._entities.forEach(callbackfn);
     }
+
+    flushQuery = () => {
+        this.currentChangeSet = this.nextChangeSetIndex;
+        this.nextAdded.length = 0;
+        this.nextRemoved.length = 0;
+    };
 }

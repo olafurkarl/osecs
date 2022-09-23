@@ -5,7 +5,7 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "watch": "watch 'npm run build'",
     "test": "jest --env=node --colors --coverage test",
     "lint": "eslint src --fix --ext .ts",

@@ -4,6 +4,7 @@ import { Component, Entity } from '.';
 
 type ComponentDecorator = (target: Component, propertyKey: string) => void;
 type ComponentDecoratorOpts = { default: unknown };
+
 /**
  * Register field
  */

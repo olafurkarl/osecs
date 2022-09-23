@@ -37,6 +37,7 @@ type ComponentName = string;
 export class World {
     private systems: System[] = [];
     private queryRegistry: Map<ComponentName, Query[]> = new Map();
+    private allQueries: Array<Query> = [];
     private entities: Map<EntityId, Entity> = new Map();
 
     static create(): WorldBuilder {
@@ -61,6 +62,8 @@ export class World {
         } else {
             registry.get(key)?.push(query);
         }
+
+        this.allQueries.push(query);
     }
 
     mapAspects(system: System): void {
@@ -82,6 +85,16 @@ export class World {
     }
 
     run = (delta = 1): void => {
+        /**
+         * Flush every query so that they get fresh changesets to track
+         */
+        this.allQueries.forEach((query) => {
+            query.flushQuery();
+        });
+
+        /**
+         * Run each system
+         */
         this.systems.forEach((system: System) => {
             system.run(delta);
         });
@@ -97,14 +110,8 @@ export class World {
          * This actually has the potential to iterate through the same query multiple times
          * It should be possible to narrow it down so that we only check each query once?
          */
-        this.queryRegistry.get(componentName)?.forEach((query) => {
-            const registerThisEntity = query.shouldRegisterEntity(entity);
-
-            if (query.hasEntity(entity) && !registerThisEntity) {
-                query.unregisterEntity(entity);
-            } else if (registerThisEntity) {
-                query.registerEntity(entity);
-            }
+        this.queryRegistry.get(componentName)?.forEach((query: Query) => {
+            query.updateRegistry(entity);
         });
     }
 
