@@ -33,11 +33,13 @@ export class Entity {
 
     addComponent<T extends Component>(
         component: { new (): T },
-        ...args: Parameters<T['setValues']>
+        args?: ComponentArgs
     ): void {
         const componentInstance = new component();
         componentInstance.setEntity(this);
-        componentInstance.setValues(...args);
+        if (Component.ComponentFieldMap[component.name]?.length > 0 && args) {
+            componentInstance.setValues(args);
+        }
 
         this.components.set(component.name, componentInstance);
         this._componentMask.flipOn(componentInstance.componentId - 1);
@@ -50,9 +52,9 @@ export class Entity {
      */
     upsert<T extends Component>(
         component: { new (): T },
-        ...args: Parameters<T['setValues']>
+        args?: ComponentArgs
     ): void {
-        this.upsertComponent(component, ...args);
+        this.upsertComponent(component, args);
     }
 
     /**
@@ -62,12 +64,14 @@ export class Entity {
      */
     upsertComponent<T extends Component>(
         component: { new (): T },
-        ...args: Parameters<T['setValues']>
+        args?: ComponentArgs
     ): void {
         if (!this.hasComponent(component)) {
-            this.addComponent(component, ...args);
+            this.addComponent(component, args);
         } else {
-            this.components.get(component.constructor.name)?.setValues(...args);
+            this.components
+                .get(component.constructor.name)
+                ?.setValues(args ?? {});
         }
     }
 
@@ -197,12 +201,14 @@ export interface IEntityBuilder {
     build(): Entity;
 }
 
+type ComponentArgs = Record<any, any>;
+
 export class EntityBuilder implements IEntityBuilder {
     private world: World;
     private name: string | undefined;
     private componentRecipes: Array<{
         constructor: { new (): unknown };
-        args: unknown[];
+        args?: Record<any, unknown>;
     }> = [];
 
     static create(world: World, name?: string): EntityBuilder {
@@ -216,14 +222,14 @@ export class EntityBuilder implements IEntityBuilder {
 
     with<T extends Component>(
         componentConstuctor: { new (): T },
-        ...args: Parameters<T['setValues']>
+        args?: ComponentArgs
     ): EntityBuilder {
-        return this.withComponent(componentConstuctor, ...args);
+        return this.withComponent(componentConstuctor, args);
     }
 
     withComponent<T extends Component>(
         componentConstuctor: { new (): T },
-        ...args: Parameters<T['setValues']>
+        args?: ComponentArgs
     ): EntityBuilder {
         this.componentRecipes.push({
             constructor: componentConstuctor,
@@ -236,7 +242,7 @@ export class EntityBuilder implements IEntityBuilder {
         const entity = new Entity(this.world, this.name);
         this.componentRecipes.forEach(({ constructor, args }) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            entity.addComponent<any>(constructor, ...args);
+            entity.addComponent<any>(constructor, args);
         });
         return entity;
     }
