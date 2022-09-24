@@ -100,6 +100,8 @@ export class World {
         this.systems.forEach((system: System) => {
             system.run(delta);
         });
+
+        this.processGraveyard();
     };
 
     mapEntity(entity: Entity) {

@@ -59,42 +59,44 @@ export function parent(
      * @param target component class
      * @param propertyKey name of property
      */
-    return function (target: Component, propertyKey: string) {
+    return function (componentClass: Component, propertyKey: string) {
         const getter = function (this: Component) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (this as any)['__' + propertyKey];
         };
-        const setter = function (this: Component, newValue: Entity) {
+        const setter = function (this: Component, parent: Entity) {
             // TODO if previous value held, should clean up old reference
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (this as any)['__' + propertyKey] = newValue;
+            (this as any)['__' + propertyKey] = parent;
 
             // TODO remove entity refs if no longer applicable
 
             // Adding entity reference to parent component class
-            if (!newValue.has(parentComponentClass)) {
-                newValue.addComponent(parentComponentClass, {
+            if (!parent.has(parentComponentClass)) {
+                parent.addComponent(parentComponentClass, {
                     [aggregatePropertyKey]: [this.getEntity()]
                 });
             } else {
                 (
-                    (newValue.get(parentComponentClass) as never)[
+                    (parent.get(parentComponentClass) as never)[
                         aggregatePropertyKey
                     ] as Array<Entity>
                 ).push(this.getEntity());
             }
 
             // cleans up this reference if component is removed
-            newValue.addCleanupCallback(() => {
+            parent.addCleanupCallback(() => {
                 const entity = this.getEntity();
-                if (entity.has(target)) {
+                if (entity.has(componentClass)) {
                     // entity property has been removed from component, we remove the component
-                    entity.removeComponentByName(target.constructor.name);
+                    entity.removeComponentByName(
+                        componentClass.constructor.name
+                    );
                 }
             });
         };
-        Object.defineProperty(target, propertyKey, {
+        Object.defineProperty(componentClass, propertyKey, {
             get: getter,
             set: setter
         });
