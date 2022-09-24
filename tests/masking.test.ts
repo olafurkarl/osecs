@@ -185,7 +185,7 @@ describe('Masking', () => {
         expect(testSystemInst.getEntities().length).toEqual(0);
     });
 
-    it('masks out an entity completely when it is destroyed', () => {
+    it('masks out an entity completely when it is purged', () => {
         const TestSystemA = setupSystemType([
             Has(ATestComponent),
             Has(BTestComponent)
@@ -199,7 +199,7 @@ describe('Masking', () => {
 
         expect(entity.componentMask.maskString).toEqual('11');
 
-        entity.destroy();
+        entity.purge();
 
         world.run();
 

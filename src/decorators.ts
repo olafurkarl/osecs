@@ -75,7 +75,7 @@ export function parent(
             // Adding entity reference to parent component class
             if (!newValue.has(parentComponentClass)) {
                 newValue.addComponent(parentComponentClass, {
-                    [aggregatePropertyKey]: []
+                    [aggregatePropertyKey]: [this.getEntity()]
                 });
             } else {
                 (
