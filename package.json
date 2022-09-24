@@ -16,7 +16,7 @@
     "url": "git+ssh://git@github.com/olafurkarl/osecs.git"
   },
   "author": "Olafur Karl Stefansson",
-  "license": "ISC",
+  "license": "MIT",
   "exports": {
     ".": "./dist/src/index.js",
     "./perf.js": "./dist/src/index.js"
