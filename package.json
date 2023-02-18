@@ -9,7 +9,7 @@
     "watch": "watch 'npm run build'",
     "test": "jest --env=node --colors --coverage test",
     "lint": "eslint src --fix --ext .ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "./scripts/prepublish.sh"
   },
   "repository": {
     "type": "git",
