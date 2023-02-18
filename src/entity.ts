@@ -80,7 +80,7 @@ export class Entity {
      * Alias for {@link getComponent}
      */
     get<T extends { new (...args: never): Component }>(
-        componentClass: T
+        componentClass: T | Component
     ): InstanceType<T> {
         return this.getComponent(componentClass);
     }
@@ -91,8 +91,14 @@ export class Entity {
      * @returns Component instance
      */
     getComponent<T extends { new (...args: never): Component }>(
-        componentClass: T
+        componentClass: T | Component
     ): InstanceType<T> {
+        if (componentClass instanceof Component) {
+            return this.components.get(
+                componentClass.constructor.name
+            ) as InstanceType<T>;
+        }
+
         return this.components.get(componentClass.name) as InstanceType<T>;
     }
 

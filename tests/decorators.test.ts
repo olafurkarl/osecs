@@ -5,12 +5,13 @@ import {
     EntityBuilder,
     World,
     parent,
+    children,
     field
 } from '../src';
 
 @RegisterComponent
 class TestParentComponent extends Component {
-    @field declare children: Entity[];
+    @field @children declare children: Set<Entity>;
 }
 
 @RegisterComponent
@@ -29,6 +30,22 @@ describe('Parent decorator', () => {
             .build();
 
         expect(parentEntity.hasComponent(TestParentComponent)).toEqual(true);
+    });
+
+    it('adds parent component to new referenced parent entity and removes it from old parent entity', () => {
+        const world = World.create().build();
+        const builder = EntityBuilder.create(world);
+
+        const parentEntity = builder.build();
+        const childEntity = EntityBuilder.create(world)
+            .withComponent(TestChildComponent, { parent: parentEntity })
+            .build();
+
+        const newParentEntity = builder.build();
+        childEntity.get(TestChildComponent).parent = newParentEntity;
+
+        expect(parentEntity.hasComponent(TestParentComponent)).toEqual(false);
+        expect(newParentEntity.hasComponent(TestParentComponent)).toEqual(true);
     });
 
     it('added parent component correctly references child', () => {
@@ -71,5 +88,21 @@ describe('Parent decorator', () => {
         parentEntity.purge();
 
         expect(childEntity.has(TestChildComponent)).toEqual(false);
+    });
+
+    it('parent component has child removed if referenced entity is purged', () => {
+        const world = World.create().build();
+        const builder = EntityBuilder.create(world);
+
+        const parentEntity = builder.build();
+        const childEntity = EntityBuilder.create(world)
+            .withComponent(TestChildComponent, { parent: parentEntity })
+            .build();
+
+        childEntity.purge();
+
+        expect(parentEntity.get(TestParentComponent).children).not.toContain(
+            childEntity
+        );
     });
 });

@@ -66,9 +66,11 @@ export abstract class Component {
     }
 }
 
-export function RegisterComponent<
-    T extends { new (...args: any[]): Component }
->(constructor: T): any {
+export type ComponentConstructor = { new (...args: any[]): Component };
+
+export function RegisterComponent<T extends ComponentConstructor>(
+    constructor: T
+): any {
     Component.maxId++;
     const newComponentId = Component.maxId;
     constructor.prototype.componentId = newComponentId;

@@ -4,4 +4,4 @@ export type { IEntityBuilder } from './entity';
 export { System } from './system';
 export { World } from './world';
 export { Has, Without, Aspect } from './aspect';
-export { parent, field } from './decorators';
+export { parent, children, field } from './decorators';
