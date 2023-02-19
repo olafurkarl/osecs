@@ -1,7 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, Entity } from '.';
-import { ComponentConstructor } from './component';
-
-// TODO write tests for this mess
 
 type ComponentDecorator = (target: Component, propertyKey: string) => void;
 type ComponentDecoratorOpts = { default: unknown };
@@ -97,7 +95,6 @@ export function parent<
         propertyKey: K
     ) => {
         const getter = function (this: T) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (this as any)['__' + propertyKey];
         };
         const setter = function (this: T, parent: Entity) {
@@ -118,7 +115,6 @@ export function parent<
                 }
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (this as any)['__' + propertyKey] = parent;
 
             // Adding entity reference to parent component class
@@ -127,7 +123,7 @@ export function parent<
                 childrenSet.add(thisEntity);
                 parent.addComponent(parentComponentClass, {
                     [aggregatePropertyKey]: childrenSet
-                });
+                } as any);
             } else {
                 const childrenSet = (parent.get(parentComponentClass) as never)[
                     aggregatePropertyKey

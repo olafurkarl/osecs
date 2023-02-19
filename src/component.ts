@@ -66,6 +66,10 @@ export abstract class Component {
     }
 }
 
+export type ComponentArgs<C> = {
+    // Get all members of template component type, but exclude all parent properties.
+    [Property in Exclude<keyof C, keyof Component>]: C[Property];
+};
 export type ComponentConstructor = { new (...args: any[]): Component };
 
 export function RegisterComponent<T extends ComponentConstructor>(

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import { Component, ComponentName } from './component';
+import { Component, ComponentArgs, ComponentName } from './component';
 import { Mask } from './mask';
 import { Query, QueryId } from './query';
 import { World } from './world';
@@ -34,7 +34,7 @@ export class Entity {
 
     addComponent<T extends Component>(
         component: { new (): T },
-        args?: ComponentArgs
+        args?: ComponentArgs<T>
     ): void {
         const componentInstance = new component();
         componentInstance.setEntity(this);
@@ -53,7 +53,7 @@ export class Entity {
      */
     upsert<T extends Component>(
         component: { new (): T },
-        args?: ComponentArgs
+        args?: ComponentArgs<T>
     ): void {
         this.upsertComponent(component, args);
     }
@@ -65,7 +65,7 @@ export class Entity {
      */
     upsertComponent<T extends Component>(
         component: { new (): T },
-        args?: ComponentArgs
+        args?: ComponentArgs<T>
     ): void {
         if (!this.hasComponent(component)) {
             this.addComponent(component, args);
@@ -214,9 +214,6 @@ export class Entity {
 export interface IEntityBuilder {
     build(): Entity;
 }
-
-type ComponentArgs = Record<any, any>;
-
 export class EntityBuilder implements IEntityBuilder {
     private world: World;
     private name: string | undefined;
@@ -235,18 +232,18 @@ export class EntityBuilder implements IEntityBuilder {
     }
 
     with<T extends Component>(
-        componentConstuctor: { new (): T },
-        args?: ComponentArgs
+        componentConstructor: { new (): T },
+        args?: ComponentArgs<T>
     ): EntityBuilder {
-        return this.withComponent(componentConstuctor, args);
+        return this.withComponent(componentConstructor, args);
     }
 
     withComponent<T extends Component>(
-        componentConstuctor: { new (): T },
-        args?: ComponentArgs
+        componentConstructor: { new (): T },
+        args?: ComponentArgs<T>
     ): EntityBuilder {
         this.componentRecipes.push({
-            constructor: componentConstuctor,
+            constructor: componentConstructor,
             args: args
         });
         return this;
