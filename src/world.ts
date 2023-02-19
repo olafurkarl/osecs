@@ -2,28 +2,31 @@ import { System } from './system';
 import { Entity, EntityBuilder, EntityId } from './entity';
 import { Query } from './query';
 
+export type SystemAndProps<T extends { new (...args: unknown[]): System }> = {
+    system: T;
+    props: ConstructorParameters<T>;
+};
+
 class WorldBuilder {
     private world: World;
 
-    constructor() {
-        this.world = new World();
+    constructor(world: World) {
+        this.world = world;
     }
 
-    static create(): WorldBuilder {
-        return new WorldBuilder();
-    }
+    /**
+     * Add a system to the world.
+     * @param systemClass Class of system being added to world
+     * @param args Any constructor arguments that the system takes
+     */
+    withSystem<T extends { new (...args: any[]): System }>(
+        systemClass: T,
+        ...args: ConstructorParameters<T>
+    ) {
+        const systemInstance = new systemClass(...args);
+        systemInstance.world = this.world;
+        this.world.addSystem(systemInstance);
 
-    withSystem<T extends { new (...args: any): any }>(systemClass: T) {
-        this.world.addSystem(new systemClass(this.world));
-        return this;
-    }
-
-    withSystems<T extends { new (...args: never): any }>(
-        systemClasses: T[]
-    ): WorldBuilder {
-        systemClasses.forEach((s) => {
-            this.withSystem(s);
-        });
         return this;
     }
 
@@ -42,8 +45,11 @@ export class World {
     private deadEntities: Array<Entity> = [];
     private entitiesToBePurged: Array<Entity> = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    private constructor() {}
+
     static create(): WorldBuilder {
-        return new WorldBuilder();
+        return new WorldBuilder(new World());
     }
 
     public getEntityById(id: EntityId) {
@@ -64,8 +70,6 @@ export class World {
         } else {
             registry.get(key)?.push(query);
         }
-
-        this.allQueries.push(query);
     }
 
     mapAspects(system: System): void {
@@ -78,6 +82,7 @@ export class World {
                     this.queryRegistry
                 );
             });
+            this.allQueries.push(query);
         });
     }
 

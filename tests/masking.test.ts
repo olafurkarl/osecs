@@ -42,7 +42,7 @@ const setupSystem = (aspects: Aspect[]): TestSystem => {
     class TSystem extends TestSystem {
         testQuery = this.query([...aspects]);
     }
-    return new TSystem(undefined as unknown as World);
+    return new TSystem();
 };
 
 const setupSystemType = (aspects: Aspect[]): typeof TestSystem => {

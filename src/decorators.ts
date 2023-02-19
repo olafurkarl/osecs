@@ -2,47 +2,25 @@
 import { Component, Entity } from '.';
 
 type ComponentDecorator = (target: Component, propertyKey: string) => void;
-type ComponentDecoratorOpts = { default: unknown };
 
 /**
  * Register field
  */
-const fieldDecoratorImpl = (
+const fieldDecoratorImpl: ComponentDecorator = (
     target: Component,
-    propertyKey: string,
-    opts?: ComponentDecoratorOpts
+    propertyKey: string
 ) => {
     const className = target.constructor.name;
     if (!Component.ComponentFieldMap[className]) {
         Component.ComponentFieldMap[className] = [];
     }
     Component.ComponentFieldMap[className].push({
-        fieldName: propertyKey,
-        defaultValue: opts?.default
+        fieldName: propertyKey
     });
 };
 
-const isClass = (instance: any): instance is Component => {
-    return typeof instance.constructor !== 'undefined';
-};
-
-export function field(target: Component, propertyKey: string): void;
-export function field(opts: ComponentDecoratorOpts): ComponentDecorator;
-export function field(
-    targetOrOpts: Component | ComponentDecoratorOpts,
-    propertyKey?: string
-): ComponentDecorator | undefined {
-    if (isClass(targetOrOpts) && propertyKey) {
-        fieldDecoratorImpl(targetOrOpts, propertyKey);
-    } else {
-        return function (target: Component, propertyKey: string) {
-            fieldDecoratorImpl(
-                target,
-                propertyKey,
-                targetOrOpts as ComponentDecoratorOpts
-            );
-        };
-    }
+export function field(target: Component, propertyKey: string) {
+    fieldDecoratorImpl(target, propertyKey);
 }
 
 export function children<

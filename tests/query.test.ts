@@ -5,14 +5,21 @@ import { World } from '../src/world';
 @RegisterComponent
 class ATestComponent extends Component {}
 
-class TestSystem extends System {
-    public ents = this.query([Has(ATestComponent)]);
+@RegisterComponent
+class BTestComponent extends Component {}
 
-    public lastAddedCount = -1;
-    public lastRemovedCount = -1;
+class TestSystemA extends System {
+    public entities = this.query([Has(ATestComponent)]);
     run() {
-        this.lastAddedCount = this.ents.added.length;
-        this.lastRemovedCount = this.ents.removed.length;
+        // no op
+    }
+}
+
+class TestSystemB extends System {
+    public entities = this.query([Has(ATestComponent), Has(BTestComponent)]);
+
+    run() {
+        // no op
     }
 }
 
@@ -29,7 +36,7 @@ describe('Query', () => {
             }
         }
         const world = World.create()
-            .withSystems([TestSystemCheckingComponents])
+            .withSystem(TestSystemCheckingComponents)
             .build();
         const inst = world.getSystem(TestSystemCheckingComponents);
 
@@ -39,29 +46,46 @@ describe('Query', () => {
 
         expect(inst.currentHadComponent).toEqual(true);
     });
-    it('gets newly matching entities in added query result on the next frame', () => {
-        const world = World.create().withSystems([TestSystem]).build();
-        const inst = world.getSystem(TestSystem);
 
-        EntityBuilder.create(world).withComponent(ATestComponent).build();
+    it('gets newly matching entities in added query result on the next frame 1', () => {
+        const world = World.create().withSystem(TestSystemB).build();
+        const inst = world.getSystem(TestSystemB);
 
-        expect(inst.ents.added.length).toEqual(0);
+        EntityBuilder.create(world)
+            .withComponent(ATestComponent)
+            .withComponent(BTestComponent)
+            .build();
+
+        expect(inst.entities.added.length).toEqual(0);
 
         world.run();
 
-        expect(inst.lastAddedCount).toEqual(1);
+        expect(inst.entities.added.length).toEqual(1);
+    });
+
+    it('gets newly matching entities in added query result on the next frame 2', () => {
+        const world = World.create().withSystem(TestSystemA).build();
+        const inst = world.getSystem(TestSystemA);
+
+        EntityBuilder.create(world).withComponent(ATestComponent).build();
+
+        expect(inst.entities.added.length).toEqual(0);
+
+        world.run();
+
+        expect(inst.entities.added.length).toEqual(1);
     });
 
     it('does not keep added entities beyond the next frame', () => {
-        const world = World.create().withSystems([TestSystem]).build();
-        const inst = world.getSystem(TestSystem);
+        const world = World.create().withSystem(TestSystemA).build();
+        const inst = world.getSystem(TestSystemA);
 
         EntityBuilder.create(world).withComponent(ATestComponent).build();
 
         world.run();
         world.run();
 
-        expect(inst.lastAddedCount).toEqual(0);
+        expect(inst.entities.added.length).toEqual(0);
     });
 
     it('added entities has the requisite components', () => {
@@ -76,7 +100,7 @@ describe('Query', () => {
             }
         }
         const world = World.create()
-            .withSystems([TestSystemCheckingComponents])
+            .withSystem(TestSystemCheckingComponents)
             .build();
         const inst = world.getSystem(TestSystemCheckingComponents);
 
@@ -88,8 +112,8 @@ describe('Query', () => {
     });
 
     it('gets newly non-matching entities in removed query result on the next frame', () => {
-        const world = World.create().withSystems([TestSystem]).build();
-        const inst = world.getSystem(TestSystem);
+        const world = World.create().withSystem(TestSystemA).build();
+        const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
             .withComponent(ATestComponent)
@@ -99,12 +123,12 @@ describe('Query', () => {
 
         world.run();
 
-        expect(inst.lastRemovedCount).toEqual(1);
+        expect(inst.entities.removed.length).toEqual(1);
     });
 
     it('does not keep removed query result beyond the next frame', () => {
-        const world = World.create().withSystems([TestSystem]).build();
-        const inst = world.getSystem(TestSystem);
+        const world = World.create().withSystem(TestSystemA).build();
+        const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
             .withComponent(ATestComponent)
@@ -115,12 +139,12 @@ describe('Query', () => {
         world.run();
         world.run();
 
-        expect(inst.lastRemovedCount).toEqual(0);
+        expect(inst.entities.removed.length).toEqual(0);
     });
 
     it('shows entity in removed query if it is deleted', () => {
-        const world = World.create().withSystems([TestSystem]).build();
-        const inst = world.getSystem(TestSystem);
+        const world = World.create().withSystem(TestSystemA).build();
+        const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
             .withComponent(ATestComponent)
@@ -130,7 +154,7 @@ describe('Query', () => {
 
         world.run();
 
-        expect(inst.lastRemovedCount).toEqual(1);
+        expect(inst.entities.removed.length).toEqual(1);
     });
 
     it('shows entity in removed query if it is deleted', () => {
@@ -145,7 +169,7 @@ describe('Query', () => {
             }
         }
         const world = World.create()
-            .withSystems([TestSystemCheckingComponents])
+            .withSystem(TestSystemCheckingComponents)
             .build();
         const inst = world.getSystem(TestSystemCheckingComponents);
 

@@ -7,12 +7,11 @@ import { EntityBuilder } from '.';
 export type SystemId = string;
 export abstract class System {
     public id: SystemId;
-    public world: World;
+    public declare world: World;
     private _queries: Query[] = [];
 
-    constructor(world: World) {
+    constructor() {
         this.id = uuidv4();
-        this.world = world;
     }
 
     abstract run(delta: number): void;

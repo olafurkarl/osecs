@@ -5,7 +5,6 @@ export type ComponentId = number;
 export type ComponentName = string;
 export type ComponentField = {
     fieldName: string;
-    defaultValue: any;
 };
 /**
  * Component that can be attached to entities.
@@ -26,19 +25,14 @@ export abstract class Component {
     // Entity that this component is attached to
     private declare entity: Entity;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types
     setValues(values: Record<string, any>): void {
         const fields = Component.ComponentFieldMap[this.constructor.name];
 
-        fields.forEach(({ fieldName, defaultValue }) => {
+        fields.forEach(({ fieldName }) => {
             if (typeof values[fieldName] === 'undefined') {
-                if (typeof defaultValue !== 'undefined') {
-                    (this as any)[fieldName] = defaultValue;
-                } else {
-                    throw new Error(
-                        `Value not provided for ${fieldName} on component ${this.constructor.name}.`
-                    );
-                }
+                throw new Error(
+                    `Value not provided for ${fieldName} on component ${this.constructor.name}.`
+                );
             } else {
                 (this as any)[fieldName] = values[fieldName];
             }
@@ -66,9 +60,18 @@ export abstract class Component {
     }
 }
 
+type NonFunctionPropertyNames<T> = {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    [K in keyof T]: T[K] extends Function ? never : K;
+}[keyof T];
+
 export type ComponentArgs<C> = {
-    // Get all members of template component type, but exclude all parent properties.
-    [Property in Exclude<keyof C, keyof Component>]: C[Property];
+    // Get all members of template component type, but exclude all parent properties
+    // as well as functions.
+    [Property in Exclude<
+        NonFunctionPropertyNames<C>,
+        keyof Component
+    >]: C[Property];
 };
 export type ComponentConstructor = { new (...args: any[]): Component };
 
