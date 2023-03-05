@@ -38,7 +38,7 @@ export class Entity {
     ): void {
         const componentInstance = new component();
         componentInstance.setEntity(this);
-        if (Component.ComponentFieldMap[component.name]?.length > 0 && args) {
+        if (Component.ComponentFieldMap[component.name]?.size > 0 && args) {
             componentInstance.setValues(args);
         }
 

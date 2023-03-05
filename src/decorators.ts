@@ -12,9 +12,9 @@ const fieldDecoratorImpl: ComponentDecorator = (
 ) => {
     const className = target.constructor.name;
     if (!Component.ComponentFieldMap[className]) {
-        Component.ComponentFieldMap[className] = [];
+        Component.ComponentFieldMap[className] = new Map();
     }
-    Component.ComponentFieldMap[className].push({
+    Component.ComponentFieldMap[className].set(propertyKey, {
         fieldName: propertyKey
     });
 };
@@ -22,6 +22,59 @@ const fieldDecoratorImpl: ComponentDecorator = (
 export function field(target: Component, propertyKey: string) {
     fieldDecoratorImpl(target, propertyKey);
 }
+
+/**
+ * Initialize field as another field on startup.
+ * Useful for patterns where you have a field that derives from another.
+ * (Example: A 'current' hp value might be initialized from a 'max' hp value.
+ * @param initAsField
+ */
+export function initializeAs(initAsField: string) {
+    return function (target: Component, propertyKey: any) {
+        const className = target.constructor.name;
+        if (!Component.ComponentFieldInitializeMap[className]) {
+            Component.ComponentFieldInitializeMap[className] = new Map();
+        }
+
+        if (
+            !Component.ComponentFieldInitializeMap[className].has(initAsField)
+        ) {
+            !Component.ComponentFieldInitializeMap[className].set(
+                initAsField,
+                []
+            );
+        }
+        Component.ComponentFieldInitializeMap[className]
+            .get(initAsField)
+            ?.push(propertyKey);
+    };
+}
+
+export function init<C>(
+    initValue: C
+): <T extends Component, K extends keyof T>(
+    target: T,
+    propertyKey: T[K] extends C ? K : never
+) => void {
+    return function (target: Component, propertyKey: any) {
+        return initImpl(target, propertyKey, initValue);
+    };
+}
+
+const initImpl = (
+    target: Component,
+    propertyKey: string,
+    defaultValue: unknown
+) => {
+    const className = target.constructor.name;
+    if (!Component.ComponentFieldMap[className]) {
+        Component.ComponentFieldMap[className] = new Map();
+    }
+    Component.ComponentFieldMap[className].set(propertyKey, {
+        fieldName: propertyKey,
+        defaultValue
+    });
+};
 
 export function children<
     T extends Component & Record<K, Set<Entity>>,

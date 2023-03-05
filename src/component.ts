@@ -5,6 +5,7 @@ export type ComponentId = number;
 export type ComponentName = string;
 export type ComponentField = {
     fieldName: string;
+    defaultValue?: unknown;
 };
 /**
  * Component that can be attached to entities.
@@ -14,7 +15,15 @@ export abstract class Component {
     static ComponentIdMap: Record<ComponentName, ComponentId> = {};
 
     // Map to keep a record of all fields registered with decorators
-    static ComponentFieldMap: Record<ComponentName, Array<ComponentField>> = {};
+    static ComponentFieldMap: Record<
+        ComponentName,
+        Map<string, ComponentField>
+    > = {};
+
+    static ComponentFieldInitializeMap: Record<
+        ComponentName,
+        Map<string, Array<string>>
+    > = {};
 
     // Higher current component prototype id
     static maxId = 0;
@@ -27,6 +36,8 @@ export abstract class Component {
 
     setValues(values: Record<string, any>): void {
         const fields = Component.ComponentFieldMap[this.constructor.name];
+        const initializers =
+            Component.ComponentFieldInitializeMap[this.constructor.name];
 
         fields.forEach(({ fieldName }) => {
             if (typeof values[fieldName] === 'undefined') {
@@ -35,6 +46,15 @@ export abstract class Component {
                 );
             } else {
                 (this as any)[fieldName] = values[fieldName];
+
+                /**
+                 * Initialize fields marked with `initializeAs`
+                 */
+                if (initializers && initializers.has(fieldName)) {
+                    initializers.get(fieldName)?.forEach((otherField) => {
+                        (this as any)[otherField] = values[fieldName];
+                    });
+                }
             }
         });
     }
