@@ -44,6 +44,7 @@ export class World {
     private entities: Map<EntityId, Entity> = new Map();
     private deadEntities: Array<Entity> = [];
     private entitiesToBePurged: Array<Entity> = [];
+    private initialized = false;
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {}
@@ -92,6 +93,13 @@ export class World {
     }
 
     run = (delta = 1): void => {
+        if (!this.initialized) {
+            this.systems.forEach((system) => {
+                system.initialize();
+            });
+            this.initialized = true;
+        }
+
         /**
          * Flush every query so that they get fresh changesets to track
          */

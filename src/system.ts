@@ -14,6 +14,9 @@ export abstract class System {
         this.id = uuidv4();
     }
 
+    initialize() {
+        // optional abstract
+    }
     abstract run(delta: number): void;
 
     get queries() {
