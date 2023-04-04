@@ -156,11 +156,20 @@ export function parent<
                     [aggregatePropertyKey]: childrenSet
                 } as any);
             } else {
-                const childrenSet = (parent.get(parentComponentClass) as never)[
+                const childrenSet = parent.get(parentComponentClass)[
                     aggregatePropertyKey
-                ] as Set<Entity>;
+                ] as Set<Entity> | undefined;
 
-                childrenSet.add(thisEntity);
+                if (!childrenSet) {
+                    const newChildrenSet = new Set<Entity>();
+                    newChildrenSet.add(thisEntity);
+
+                    (parent.get(parentComponentClass)[
+                        aggregatePropertyKey
+                    ] as Set<Entity>) = newChildrenSet;
+                } else {
+                    childrenSet.add(thisEntity);
+                }
             }
 
             // cleans up this reference if component is removed

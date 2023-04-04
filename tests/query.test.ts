@@ -40,7 +40,7 @@ describe('Query', () => {
             .build();
         const inst = world.getSystem(TestSystemCheckingComponents);
 
-        EntityBuilder.create(world).withComponent(ATestComponent).build();
+        EntityBuilder.create(world).with(ATestComponent).build();
 
         world.run();
 
@@ -52,8 +52,8 @@ describe('Query', () => {
         const inst = world.getSystem(TestSystemB);
 
         EntityBuilder.create(world)
-            .withComponent(ATestComponent)
-            .withComponent(BTestComponent)
+            .with(ATestComponent)
+            .with(BTestComponent)
             .build();
 
         expect(inst.entities.added.length).toEqual(0);
@@ -67,7 +67,7 @@ describe('Query', () => {
         const world = World.create().withSystem(TestSystemA).build();
         const inst = world.getSystem(TestSystemA);
 
-        EntityBuilder.create(world).withComponent(ATestComponent).build();
+        EntityBuilder.create(world).with(ATestComponent).build();
 
         expect(inst.entities.added.length).toEqual(0);
 
@@ -80,7 +80,7 @@ describe('Query', () => {
         const world = World.create().withSystem(TestSystemA).build();
         const inst = world.getSystem(TestSystemA);
 
-        EntityBuilder.create(world).withComponent(ATestComponent).build();
+        EntityBuilder.create(world).with(ATestComponent).build();
 
         world.run();
         world.run();
@@ -104,7 +104,7 @@ describe('Query', () => {
             .build();
         const inst = world.getSystem(TestSystemCheckingComponents);
 
-        EntityBuilder.create(world).withComponent(ATestComponent).build();
+        EntityBuilder.create(world).with(ATestComponent).build();
 
         world.run();
 
@@ -116,7 +116,7 @@ describe('Query', () => {
         const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
-            .withComponent(ATestComponent)
+            .with(ATestComponent)
             .build();
 
         entity.removeComponent(ATestComponent);
@@ -131,7 +131,7 @@ describe('Query', () => {
         const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
-            .withComponent(ATestComponent)
+            .with(ATestComponent)
             .build();
 
         entity.removeComponent(ATestComponent);
@@ -147,7 +147,7 @@ describe('Query', () => {
         const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
-            .withComponent(ATestComponent)
+            .with(ATestComponent)
             .build();
 
         entity.destroy();
@@ -174,7 +174,7 @@ describe('Query', () => {
         const inst = world.getSystem(TestSystemCheckingComponents);
 
         const entity = EntityBuilder.create(world)
-            .withComponent(ATestComponent)
+            .with(ATestComponent)
             .build();
 
         entity.destroy();

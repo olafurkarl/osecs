@@ -7,6 +7,24 @@ import { World } from './world';
 
 export type EntityId = string;
 
+export type IfEquals<T, U, Y = unknown, N = never> = (<G>() => G extends T
+    ? 1
+    : 2) extends <G>() => G extends U ? 1 : 2
+    ? Y
+    : N;
+export type KeysOfType<T, U> = {
+    [K in keyof T]: T[K] extends U ? K : never;
+}[keyof T];
+export type RequiredKeys<T> = Exclude<
+    KeysOfType<T, Exclude<T[keyof T], undefined>>,
+    undefined
+>;
+export type ExcludeOptionalProps<T> = Pick<T, RequiredKeys<T>>;
+
+type RequiredFieldsOnly<T> = {
+    [K in keyof T as T[K] extends Required<T>[K] ? K : never]: T[K];
+};
+
 /**
  * A base class from which all game entities derive, supports adding and removing {@link Component | Components}
  */
@@ -232,13 +250,6 @@ export class EntityBuilder implements IEntityBuilder {
     }
 
     with<T extends Component>(
-        componentConstructor: { new (): T },
-        args?: ComponentArgs<T>
-    ): EntityBuilder {
-        return this.withComponent(componentConstructor, args);
-    }
-
-    withComponent<T extends Component>(
         componentConstructor: { new (): T },
         args?: ComponentArgs<T>
     ): EntityBuilder {

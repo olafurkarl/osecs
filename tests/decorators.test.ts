@@ -26,7 +26,7 @@ describe('Parent decorator', () => {
 
         const parentEntity = builder.build();
         EntityBuilder.create(world)
-            .withComponent(TestChildComponent, { parent: parentEntity })
+            .with(TestChildComponent, { parent: parentEntity })
             .build();
 
         expect(parentEntity.hasComponent(TestParentComponent)).toEqual(true);
@@ -38,7 +38,7 @@ describe('Parent decorator', () => {
 
         const parentEntity = builder.build();
         const childEntity = EntityBuilder.create(world)
-            .withComponent(TestChildComponent, { parent: parentEntity })
+            .with(TestChildComponent, { parent: parentEntity })
             .build();
 
         const newParentEntity = builder.build();
@@ -54,7 +54,7 @@ describe('Parent decorator', () => {
 
         const parentEntity = builder.build();
         const childEntity = EntityBuilder.create(world)
-            .withComponent(TestChildComponent, { parent: parentEntity })
+            .with(TestChildComponent, { parent: parentEntity })
             .build();
 
         expect(parentEntity.get(TestParentComponent).children).toContain(
@@ -68,7 +68,7 @@ describe('Parent decorator', () => {
 
         const parentEntity = builder.build();
         const childEntity = EntityBuilder.create(world)
-            .withComponent(TestChildComponent, { parent: parentEntity })
+            .with(TestChildComponent, { parent: parentEntity })
             .build();
 
         expect(childEntity.get(TestChildComponent).parent.id).toEqual(
@@ -82,7 +82,7 @@ describe('Parent decorator', () => {
 
         const parentEntity = builder.build();
         const childEntity = EntityBuilder.create(world)
-            .withComponent(TestChildComponent, { parent: parentEntity })
+            .with(TestChildComponent, { parent: parentEntity })
             .build();
 
         parentEntity.purge();
@@ -96,7 +96,7 @@ describe('Parent decorator', () => {
 
         const parentEntity = builder.build();
         const childEntity = EntityBuilder.create(world)
-            .withComponent(TestChildComponent, { parent: parentEntity })
+            .with(TestChildComponent, { parent: parentEntity })
             .build();
 
         childEntity.purge();
