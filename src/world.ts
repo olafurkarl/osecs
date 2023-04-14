@@ -53,6 +53,16 @@ export class World {
         return new WorldBuilder(new World());
     }
 
+    destroy(): void {
+        this.systems = [];
+        this.queryRegistry.clear();
+        this.allQueries = [];
+        this.entities.clear();
+        this.deadEntities = [];
+        this.entitiesToBePurged = [];
+        this.initialized = false;
+    }
+
     public getEntityById(id: EntityId) {
         return this.entities.get(id);
     }
