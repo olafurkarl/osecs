@@ -40,14 +40,12 @@ export class Entity {
     private components: Map<ComponentName, Component>;
     private currentQueries = new Map<QueryId, Query>();
 
-    constructor(world: World, name?: string) {
-        this.id = uuidv4().split('-')[0];
+    constructor(world: World, opts?: EntityOpts) {
+        this.id = opts?.id ?? uuidv4().split('-')[0];
+        this.name = opts?.name ?? 'unnamed';
         this.components = new Map<ComponentName, Component>();
         this.world = world;
         this._componentMask = new Mask();
-        if (name) {
-            this.name = name;
-        }
     }
 
     addComponent<T extends Component>(
@@ -232,21 +230,26 @@ export class Entity {
 export interface IEntityBuilder {
     build(): Entity;
 }
+
+export type EntityOpts = {
+    id?: string;
+    name?: string;
+};
 export class EntityBuilder implements IEntityBuilder {
     private world: World;
-    private name: string | undefined;
+    private opts: EntityOpts | undefined;
     private componentRecipes: Array<{
         constructor: { new (): unknown };
         args?: Record<any, unknown>;
     }> = [];
 
-    static create(world: World, name?: string): EntityBuilder {
-        return new EntityBuilder(world, name);
+    static create(world: World, opts?: EntityOpts): EntityBuilder {
+        return new EntityBuilder(world, opts);
     }
 
-    constructor(world: World, name?: string) {
+    constructor(world: World, opts?: EntityOpts) {
         this.world = world;
-        this.name = name;
+        this.opts = opts;
     }
 
     with<T extends Component>(
@@ -261,11 +264,13 @@ export class EntityBuilder implements IEntityBuilder {
     }
 
     build(): Entity {
-        const entity = new Entity(this.world, this.name);
+        const entity = new Entity(this.world, this.opts);
         this.componentRecipes.forEach(({ constructor, args }) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             entity.addComponent<any>(constructor, args);
         });
+
+        this.world.mapEntity(entity);
         return entity;
     }
 }

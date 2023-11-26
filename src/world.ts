@@ -1,5 +1,5 @@
 import { System } from './system';
-import { Entity, EntityBuilder, EntityId } from './entity';
+import { Entity, EntityBuilder, EntityId, EntityOpts } from './entity';
 import { Query } from './query';
 
 export type SystemAndProps<T extends { new (...args: unknown[]): System }> = {
@@ -102,6 +102,10 @@ export class World {
         this.systems.push(system);
     }
 
+    /**
+     * Run all of the world's systems
+     * @param delta Optional, defaults to 1
+     */
     run = (delta = 1): void => {
         if (!this.initialized) {
             this.systems.forEach((system) => {
@@ -142,8 +146,8 @@ export class World {
         });
     }
 
-    spawnEntity(name?: string): EntityBuilder {
-        return EntityBuilder.create(this, name);
+    spawnEntity(opts?: EntityOpts): EntityBuilder {
+        return EntityBuilder.create(this, opts);
     }
 
     processGraveyard() {

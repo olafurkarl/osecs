@@ -1,0 +1,19 @@
+{
+    "extends": "./tsconfig.base.json",
+    "ts-node": {
+      "compilerOptions": {
+        "module": "CommonJS",
+        "baseUrl": "./"
+      }
+    },
+    "compilerOptions": {
+      "module": "commonjs",
+      "outDir": "dist/cjs",
+    },
+    // 👇️ this may vary depending on how you
+    // name your test files
+    "exclude": [
+      "./tests/*",
+      "**/*.test.ts"
+    ]
+  }

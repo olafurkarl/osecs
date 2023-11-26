@@ -1,5 +1,9 @@
 {
-    "extends": "./tsconfig.json",
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+      "module": "ES2020",
+      "outDir": "dist/esm",
+    },
     // 👇️ this may vary depending on how you
     // name your test files
     "exclude": [

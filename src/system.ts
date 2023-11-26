@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Aspect } from './aspect';
 import { Query } from './query';
 import { EntityBuilder } from '.';
+import { EntityOpts } from './entity';
 
 export type SystemId = string;
 export abstract class System {
@@ -29,7 +30,7 @@ export abstract class System {
         return query;
     }
 
-    protected spawnEntity(name?: string) {
-        return EntityBuilder.create(this.world, name);
+    protected spawnEntity(opts?: EntityOpts) {
+        return EntityBuilder.create(this.world, opts);
     }
 }
