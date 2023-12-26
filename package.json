@@ -7,6 +7,7 @@
     "scripts": {
         "build-esm": "tsc --project tsconfig.esm.json",
         "build-cjs": "tsc --project tsconfig.cjs.json",
+        "build": "npm run build-esm && npm run build-cjs",
         "watch": "watch 'npm run build-esm'",
         "test": "jest --env=node --colors --coverage test",
         "lint": "eslint src --fix --ext .ts",
