@@ -4,20 +4,35 @@ import {
     Entity,
     EntityBuilder,
     World,
-    parent,
-    children,
     field
 } from '../src';
+import { children, parent } from '../src/decorators';
 
 @RegisterComponent
 class TestParentComponent extends Component {
-    @field @children declare children: Set<Entity>;
+    @field @children accessor children!: Set<Entity>;
 }
 
 @RegisterComponent
 class TestChildComponent extends Component {
-    @field @parent(TestParentComponent, 'children') declare parent: Entity;
+    @field @parent(TestParentComponent, 'children') accessor parent!: Entity;
 }
+
+@RegisterComponent
+class TestRegularComponent extends Component {
+    @field
+    public accessor something: number;
+}
+
+describe('Field decorator', () => {
+    it('Adds its own name to the static ComponentFieldMap', () => {
+        const component = new TestRegularComponent();
+        console.log(Component.ComponentFieldMap['TestRegularComponent'])
+        expect(Component.ComponentFieldMap['TestRegularComponent'].get('something')).toEqual({
+            fieldName: 'something'
+        })
+    })
+})
 
 describe('Parent decorator', () => {
     it('adds parent component to referenced parent entity if it is not already present', () => {

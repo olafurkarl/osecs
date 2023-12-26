@@ -10,6 +10,7 @@ const fieldDecoratorImpl: ComponentDecorator = (
     target: Component,
     propertyKey: string
 ) => {
+    console.log("called fieldDecoratorImpl")
     const className = target.constructor.name;
     if (!Component.ComponentFieldMap[className]) {
         Component.ComponentFieldMap[className] = new Map();
@@ -19,8 +20,12 @@ const fieldDecoratorImpl: ComponentDecorator = (
     });
 };
 
-export function field(target: Component, propertyKey: string) {
-    fieldDecoratorImpl(target, propertyKey);
+export function field(originalMethod: any, context: ClassAccessorDecoratorContext) {
+    console.log("originalMethod", originalMethod);
+    console.log("n", context);
+    context.addInitializer(function () {   
+        fieldDecoratorImpl(this as Component, context.name as string)
+    });
 }
 
 /**
@@ -76,114 +81,120 @@ const initImpl = (
     });
 };
 
-export function children<
-    T extends Component & Record<K, Set<Entity>>,
-    K extends string
->(component: T, propertyKey: K) {
-    const getter = function (this: Component) {
-        return (this as any)['__' + propertyKey];
-    };
+export function children<T>(value: {
+    get: () => T;
+    set: (value: T) => void;
+  }, context: ClassAccessorDecoratorContext) {
+    const propertyKey = context.name as string;
 
-    const setter = function (this: Component, children: Set<Entity>) {
-        const addCleanupCallback = (entity: Entity) => {
-            entity.addCleanupCallback(() => {
-                extendedSet.delete(entity);
-            });
-        };
-        class ExtendedSet extends Set<Entity> {
-            public add(value: Entity) {
-                super.add(value);
-                addCleanupCallback(value);
-                return this;
+    return {
+        get() {
+            return (this as any)['__' + propertyKey];
+        },
+  
+        set(val: any) {
+            const addCleanupCallback = (entity: Entity) => {
+                entity.addCleanupCallback(() => {
+                    extendedSet.delete(entity);
+                });
+            };
+            class ExtendedSet extends Set<Entity> {
+                public add(value: Entity) {
+                    super.add(value);
+                    addCleanupCallback(value);
+                    return this;
+                }
+    
+                // todo, clean up existing cleanup callback
             }
-
-            // todo, clean up existing cleanup callback
+    
+            const extendedSet = new ExtendedSet(val);
+    
+            (this as any)['__' + propertyKey] = extendedSet;
+        },
+  
+        init(initialValue: any) {
+          console.log(`initializing ${propertyKey} with value ${initialValue}`);
+          return initialValue;
         }
-
-        const extendedSet = new ExtendedSet(children);
-
-        (this as any)['__' + propertyKey] = extendedSet;
-    };
-
-    Object.defineProperty(component, propertyKey, {
-        get: getter,
-        set: setter
-    });
+      };
 }
 
-/**
- * Mark entity property as parent
- * @param parentComponentClass Component which will get updated refs to any child entity
- * @param aggregatePropertyKey Property name of array which will contain all child refs
- * @returns Decorator
- */
 export function parent<
-    V extends { new (): Component & Record<U, Set<Entity>> },
-    U extends string
->(parentComponentClass: V, aggregatePropertyKey: U) {
-    return <T extends Component & Record<K, Entity>, K extends string>(
-        component: T,
-        propertyKey: K
-    ) => {
-        const getter = function (this: T) {
-            return (this as any)['__' + propertyKey];
-        };
-        const setter = function (this: T, parent: Entity) {
-            const thisEntity = this.getEntity();
+V extends { new (): Component & Record<U, Set<Entity>> },
+U extends string>
+(parentComponentClass: V, aggregatePropertyKey: U) {
+    function replacementMethod(originalMethod: any, context: ClassAccessorDecoratorContext) {
+        const propertyKey = context.name as string;
+        return {
+            get() {
+                return (this as any)['__' + propertyKey];
+            },
+      
+            set(this: any, parent: Entity) {
+                const thisEntity = this.getEntity();
 
-            // has old parent?
-            if (thisEntity.has(this)) {
-                const oldParent = thisEntity.get(this)[propertyKey] as Entity;
-                if (oldParent.has(parentComponentClass)) {
-                    const oldParentAggregateProp =
-                        oldParent.get(parentComponentClass)[
-                            aggregatePropertyKey
-                        ];
-                    oldParentAggregateProp.delete(thisEntity);
-                    if (oldParentAggregateProp.size === 0) {
-                        oldParent.remove(parentComponentClass);
+                // has old parent?
+                if (thisEntity.has(this)) {
+                    const oldParent = thisEntity.get(this)[propertyKey] as Entity;
+                    if (oldParent.has(parentComponentClass)) {
+                        const oldParentAggregateProp =
+                            oldParent.get(parentComponentClass)[
+                                aggregatePropertyKey
+                            ];
+                        oldParentAggregateProp.delete(thisEntity);
+                        if (oldParentAggregateProp.size === 0) {
+                            oldParent.remove(parentComponentClass);
+                        }
                     }
                 }
-            }
-
-            (this as any)['__' + propertyKey] = parent;
-
-            // Adding entity reference to parent component class
-            if (!parent.has(parentComponentClass)) {
-                const childrenSet = new Set<Entity>();
-                childrenSet.add(thisEntity);
-                parent.addComponent(parentComponentClass, {
-                    [aggregatePropertyKey]: childrenSet
-                } as any);
-            } else {
-                const childrenSet = parent.get(parentComponentClass)[
-                    aggregatePropertyKey
-                ] as Set<Entity> | undefined;
-
-                if (!childrenSet) {
-                    const newChildrenSet = new Set<Entity>();
-                    newChildrenSet.add(thisEntity);
-
-                    (parent.get(parentComponentClass)[
-                        aggregatePropertyKey
-                    ] as Set<Entity>) = newChildrenSet;
-                } else {
+    
+                (this as any)['__' + propertyKey] = parent;
+    
+                // Adding entity reference to parent component class
+                if (!parent.has(parentComponentClass)) {
+                    const childrenSet = new Set<Entity>();
                     childrenSet.add(thisEntity);
+                    parent.addComponent(parentComponentClass, {
+                        [aggregatePropertyKey]: childrenSet
+                    } as any);
+                } else {
+                    const childrenSet = parent.get(parentComponentClass)[
+                        aggregatePropertyKey
+                    ] as Set<Entity> | undefined;
+    
+                    if (!childrenSet) {
+                        const newChildrenSet = new Set<Entity>();
+                        newChildrenSet.add(thisEntity);
+    
+                        (parent.get(parentComponentClass)[
+                            aggregatePropertyKey
+                        ] as Set<Entity>) = newChildrenSet;
+                    } else {
+                        childrenSet.add(thisEntity);
+                    }
                 }
-            }
 
-            // cleans up this reference if component is removed
-            parent.addCleanupCallback(() => {
-                const entity = thisEntity;
-                if (entity.has(component)) {
-                    // entity property has been removed from component, we remove the component
-                    entity.removeComponentByName(component.constructor.name);
-                }
-            });
-        };
-        Object.defineProperty(component, propertyKey, {
-            get: getter,
-            set: setter
-        });
-    };
+                console.log("parent", parent);
+                console.log("should be adding cleanup callback")
+    
+                // cleans up this reference if component is removed
+                parent.addCleanupCallback(() => {
+                    console.log("calling cleanup callback")
+                    const entity = thisEntity;
+                    console.log("entity.has parent", entity.has(parentComponentClass))
+                    if (entity.has(this)) {
+                        // entity property has been removed from component, we remove the component
+                        entity.removeComponentByName(this.constructor.name);
+                    }
+                });
+            },
+      
+            init(initialValue: any) {
+              return initialValue;
+            }
+          };
+    }
+
+    return replacementMethod;
 }

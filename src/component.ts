@@ -96,7 +96,7 @@ export type ComponentArgs<C> = {
 export type ComponentConstructor = { new (...args: any[]): Component };
 
 export function RegisterComponent<T extends ComponentConstructor>(
-    constructor: T
+    constructor: T, context: ClassDecoratorContext
 ): any {
     Component.maxId++;
     const newComponentId = Component.maxId;

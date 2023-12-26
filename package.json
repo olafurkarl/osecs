@@ -35,7 +35,7 @@
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-prettier": "^4.2.1",
         "prettier": "^2.7.1",
-        "typescript": "^5.0.4",
+        "typescript": "^5.3.3",
         "uuid": "^9.0.0",
         "watch": "^0.13.0"
     },
