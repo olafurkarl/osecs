@@ -4,6 +4,7 @@
     "description": "Oli's Simple ECS",
     "types": "./dist/esm/src/index.d.ts",
     "type": "module",
+    "main": "./src/index.ts",
     "scripts": {
         "build-esm": "tsc --project tsconfig.esm.json",
         "build-cjs": "tsc --project tsconfig.cjs.json",
