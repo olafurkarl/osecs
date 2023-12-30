@@ -46,6 +46,8 @@ export class World {
     private entitiesToBePurged: Array<Entity> = [];
     private initialized = false;
 
+    private onRunCallbacks: Array<() => void> = [];
+
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {}
 
@@ -103,6 +105,13 @@ export class World {
     }
 
     /**
+     * Adds a callback that is called on each world.run
+     */
+    onRun = (cb: () => void) => {
+        this.onRunCallbacks.push(cb);
+    }
+
+    /**
      * Run all of the world's systems
      * @param delta Optional, defaults to 1
      */
@@ -129,6 +138,8 @@ export class World {
         });
 
         this.processGraveyard();
+
+        this.onRunCallbacks.forEach((cb) => cb());
     };
 
     mapEntity(entity: Entity) {
