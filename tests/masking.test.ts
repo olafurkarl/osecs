@@ -99,7 +99,8 @@ describe('Masking', () => {
 
     it('gets entity if it has the same aspect mask', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create();
+        world.addSystem(TestSystemA);
         const entity = EntityBuilder.create(world)
             .with(ATestComponent)
             .build();
@@ -117,7 +118,7 @@ describe('Masking', () => {
     it('gets entity if it has a different but matching aspect mask', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
 
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const entity = EntityBuilder.create(world)
             .with(ATestComponent)
             .with(BTestComponent)
@@ -136,7 +137,7 @@ describe('Masking', () => {
             Has(ATestComponent),
             Without(BTestComponent)
         ]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         EntityBuilder.create(world)
             .with(ATestComponent)
             .with(BTestComponent)
@@ -152,7 +153,7 @@ describe('Masking', () => {
             Has(ATestComponent),
             Without(BTestComponent)
         ]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const entity = EntityBuilder.create(world)
             .with(ATestComponent)
             .build();
@@ -169,7 +170,7 @@ describe('Masking', () => {
 
     it('does not get entity if its aspect component removed later', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const entity = EntityBuilder.create(world)
             .with(ATestComponent)
             .build();
@@ -190,7 +191,7 @@ describe('Masking', () => {
             Has(ATestComponent),
             Has(BTestComponent)
         ]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const entity = EntityBuilder.create(world)
             .with(ATestComponent)
             .with(BTestComponent)
@@ -215,7 +216,7 @@ describe('Masking', () => {
             Has(CTestComponent),
             Without(ATestComponent)
         ]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         EntityBuilder.create(world).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
@@ -227,7 +228,7 @@ describe('Masking', () => {
             Has(CTestComponent),
             Without(ATestComponent)
         ]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         EntityBuilder.create(world).with(CTestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
@@ -236,7 +237,7 @@ describe('Masking', () => {
 
     it('include query does not include entity with no components', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         EntityBuilder.create(world).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
@@ -245,7 +246,7 @@ describe('Masking', () => {
 
     it('does not include any entities if it has no aspects', () => {
         const TestSystemA = setupSystemType([]);
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         EntityBuilder.create(world).with(ATestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);

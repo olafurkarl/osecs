@@ -7,34 +7,6 @@ export type SystemAndProps<T extends { new (...args: unknown[]): System }> = {
     props: ConstructorParameters<T>;
 };
 
-class WorldBuilder {
-    private world: World;
-
-    constructor(world: World) {
-        this.world = world;
-    }
-
-    /**
-     * Add a system to the world.
-     * @param systemClass Class of system being added to world
-     * @param args Any constructor arguments that the system takes
-     */
-    withSystem<T extends { new (...args: any[]): System }>(
-        systemClass: T,
-        ...args: ConstructorParameters<T>
-    ) {
-        const systemInstance = new systemClass(...args);
-        systemInstance.world = this.world;
-        this.world.addSystem(systemInstance);
-
-        return this;
-    }
-
-    build(): World {
-        return this.world;
-    }
-}
-
 type ComponentName = string;
 
 export class World {
@@ -51,8 +23,8 @@ export class World {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {}
 
-    static create(): WorldBuilder {
-        return new WorldBuilder(new World());
+    static create(): World {
+        return new World();
     }
 
     destroy(): void {
@@ -99,9 +71,16 @@ export class World {
         });
     }
 
-    addSystem(system: System): void {
-        this.mapAspects(system);
-        this.systems.push(system);
+    addSystem<T extends { new (...args: any[]): System }>(
+        systemClass: T,
+        ...args: ConstructorParameters<T>
+    ) {
+        const systemInstance = new systemClass(...args);
+        systemInstance.world = this;
+        this.mapAspects(systemInstance);
+        this.systems.push(systemInstance);
+
+        return this;
     }
 
     /**
@@ -109,7 +88,7 @@ export class World {
      */
     onRun = (cb: (delta: number) => void) => {
         this.onRunCallbacks.push(cb);
-    }
+    };
 
     /**
      * Run all of the world's systems
@@ -117,6 +96,11 @@ export class World {
      */
     run = (delta = 1): void => {
         if (!this.initialized) {
+            this.systems.sort((a, b) => {
+                const orderA = a.order ?? 0;
+                const orderB = b.order ?? 0;
+                return orderA - orderB;
+            });
             this.systems.forEach((system) => {
                 system.initialize();
             });

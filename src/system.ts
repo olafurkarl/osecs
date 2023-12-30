@@ -7,6 +7,7 @@ import { EntityOpts } from './entity';
 
 export type SystemId = string;
 export abstract class System {
+    public order?: number;
     public id: SystemId;
     public declare world: World;
     private _queries: Query[] = [];

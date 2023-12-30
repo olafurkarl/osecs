@@ -21,7 +21,7 @@ class TestChildComponent extends Component {
 
 describe('Parent decorator', () => {
     it('adds parent component to referenced parent entity if it is not already present', () => {
-        const world = World.create().build();
+        const world = World.create();
         const builder = EntityBuilder.create(world);
 
         const parentEntity = builder.build();
@@ -33,7 +33,7 @@ describe('Parent decorator', () => {
     });
 
     it('adds parent component to new referenced parent entity and removes it from old parent entity', () => {
-        const world = World.create().build();
+        const world = World.create();
         const builder = EntityBuilder.create(world);
 
         const parentEntity = builder.build();
@@ -49,7 +49,7 @@ describe('Parent decorator', () => {
     });
 
     it('added parent component correctly references child', () => {
-        const world = World.create().build();
+        const world = World.create();
         const builder = EntityBuilder.create(world);
 
         const parentEntity = builder.build();
@@ -63,7 +63,7 @@ describe('Parent decorator', () => {
     });
 
     it('child component correctly references parent', () => {
-        const world = World.create().build();
+        const world = World.create();
         const builder = EntityBuilder.create(world);
 
         const parentEntity = builder.build();
@@ -77,7 +77,7 @@ describe('Parent decorator', () => {
     });
 
     it('child component has component removed if referenced entity is purged', () => {
-        const world = World.create().build();
+        const world = World.create();
         const builder = EntityBuilder.create(world);
 
         const parentEntity = builder.build();
@@ -91,7 +91,7 @@ describe('Parent decorator', () => {
     });
 
     it('parent component has child removed if referenced entity is purged', () => {
-        const world = World.create().build();
+        const world = World.create();
         const builder = EntityBuilder.create(world);
 
         const parentEntity = builder.build();

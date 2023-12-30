@@ -36,8 +36,7 @@ describe('Query', () => {
             }
         }
         const world = World.create()
-            .withSystem(TestSystemCheckingComponents)
-            .build();
+            .addSystem(TestSystemCheckingComponents);
         const inst = world.getSystem(TestSystemCheckingComponents);
 
         EntityBuilder.create(world).with(ATestComponent).build();
@@ -48,7 +47,7 @@ describe('Query', () => {
     });
 
     it('gets newly matching entities in added query result on the next frame 1', () => {
-        const world = World.create().withSystem(TestSystemB).build();
+        const world = World.create().addSystem(TestSystemB);
         const inst = world.getSystem(TestSystemB);
 
         EntityBuilder.create(world)
@@ -64,7 +63,7 @@ describe('Query', () => {
     });
 
     it('gets newly matching entities in added query result on the next frame 2', () => {
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
         EntityBuilder.create(world).with(ATestComponent).build();
@@ -77,7 +76,7 @@ describe('Query', () => {
     });
 
     it('does not keep added entities beyond the next frame', () => {
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
         EntityBuilder.create(world).with(ATestComponent).build();
@@ -100,8 +99,7 @@ describe('Query', () => {
             }
         }
         const world = World.create()
-            .withSystem(TestSystemCheckingComponents)
-            .build();
+            .addSystem(TestSystemCheckingComponents);
         const inst = world.getSystem(TestSystemCheckingComponents);
 
         EntityBuilder.create(world).with(ATestComponent).build();
@@ -112,7 +110,7 @@ describe('Query', () => {
     });
 
     it('gets newly non-matching entities in removed query result on the next frame', () => {
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
@@ -127,7 +125,7 @@ describe('Query', () => {
     });
 
     it('does not keep removed query result beyond the next frame', () => {
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
@@ -143,7 +141,7 @@ describe('Query', () => {
     });
 
     it('shows entity in removed query if it is deleted', () => {
-        const world = World.create().withSystem(TestSystemA).build();
+        const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
         const entity = EntityBuilder.create(world)
@@ -169,8 +167,7 @@ describe('Query', () => {
             }
         }
         const world = World.create()
-            .withSystem(TestSystemCheckingComponents)
-            .build();
+            .addSystem(TestSystemCheckingComponents);
         const inst = world.getSystem(TestSystemCheckingComponents);
 
         const entity = EntityBuilder.create(world)
