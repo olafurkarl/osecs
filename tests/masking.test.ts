@@ -101,9 +101,7 @@ describe('Masking', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
         const world = World.create();
         world.addSystem(TestSystemA);
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(1);
@@ -154,9 +152,7 @@ describe('Masking', () => {
             Without(BTestComponent)
         ]);
         const world = World.create().addSystem(TestSystemA);
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
         world.run();
 
         entity.addComponent(BTestComponent);
@@ -171,9 +167,7 @@ describe('Masking', () => {
     it('does not get entity if its aspect component removed later', () => {
         const TestSystemA = setupSystemType([Has(ATestComponent)]);
         const world = World.create().addSystem(TestSystemA);
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
         world.run();
         const testSystemInst = world.getSystem(TestSystemA) as TestSystem;
 

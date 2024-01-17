@@ -86,9 +86,7 @@ export class Entity {
         if (!this.hasComponent(component)) {
             this.addComponent(component, args);
         } else {
-            this.components
-                .get(component.constructor.name)
-                ?.setValues(args ?? {});
+            this.components.get(component.name)?.setValues(args ?? {});
         }
     }
 

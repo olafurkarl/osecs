@@ -57,9 +57,7 @@ class KillB extends System {
 
 describe('System', () => {
     it('can remove an entity in a system that affects a different system', () => {
-        const world = World.create()
-            .addSystem(SpawnB)
-            .addSystem(KillB);
+        const world = World.create().addSystem(SpawnB).addSystem(KillB);
 
         for (let i = 0; i < 1; i++) {
             EntityBuilder.create(world)
