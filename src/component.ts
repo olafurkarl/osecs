@@ -103,4 +103,7 @@ export function RegisterComponent<T extends ComponentConstructor>(
     constructor.prototype.componentId = newComponentId;
 
     Component.ComponentIdMap[constructor.name] = newComponentId;
+    if (!Component.ComponentFieldMap[constructor.name]) {
+        Component.ComponentFieldMap[constructor.name] = new Map();
+    }
 }
