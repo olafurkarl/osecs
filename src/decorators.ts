@@ -23,6 +23,29 @@ export function field(target: Component, propertyKey: string) {
     fieldDecoratorImpl(target, propertyKey);
 }
 
+export const validate = <T>(
+    validateFunction: (val: T) => boolean
+): PropertyDecorator & MethodDecorator => {
+    return function validateImpl(
+        target: any,
+        propertyKey: PropertyKey,
+        descriptor?: PropertyDescriptor
+    ) {
+        const prevSet = descriptor?.set;
+        const setter = function (this: T) {
+            if (validateFunction(this)) {
+                prevSet?.(this);
+            } else {
+                throw new Error('Component failed validation function.');
+            }
+        };
+
+        Object.defineProperty(target, propertyKey, {
+            set: setter
+        });
+    };
+};
+
 /**
  * Initialize field as another field on startup.
  * Useful for patterns where you have a field that derives from another.

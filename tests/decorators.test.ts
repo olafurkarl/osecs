@@ -8,6 +8,7 @@ import {
     children,
     field
 } from '../src';
+import { validate } from '../src/decorators';
 
 @RegisterComponent
 class TestParentComponent extends Component {
@@ -104,5 +105,23 @@ describe('Parent decorator', () => {
         expect(parentEntity.get(TestParentComponent).children).not.toContain(
             childEntity
         );
+    });
+});
+
+const validateAngle = (angle: number) => {
+    return angle <= 360 && angle >= 0;
+};
+
+@RegisterComponent
+class TestComponentWithValidatedField extends Component {
+    @field @validate(validateAngle) declare angle: number;
+}
+describe('Validator', () => {
+    test('throws error if validation fails', () => {
+        const validatedComponent = new TestComponentWithValidatedField();
+
+        expect(() => {
+            validatedComponent.angle = 380;
+        }).toThrow();
     });
 });
