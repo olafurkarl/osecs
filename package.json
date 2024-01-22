@@ -1,6 +1,6 @@
 {
     "name": "osecs",
-    "version": "0.0.31",
+    "version": "0.0.32",
     "description": "Oli's Simple ECS",
     "types": "./dist/esm/src/index.d.ts",
     "type": "module",
