@@ -21,6 +21,9 @@
     },
     "author": "Olafur Karl Stefansson",
     "license": "MIT",
+    "files": [
+        "./dist"
+    ],
     "exports": {
         ".": {
             "import": {
