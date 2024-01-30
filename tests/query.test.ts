@@ -1,4 +1,4 @@
-import { RegisterComponent, Component, System, Has } from '../src';
+import { RegisterComponent, Component, System, Has, Without } from '../src';
 import { EntityBuilder } from '../src/entity';
 import { World } from '../src/world';
 
@@ -7,6 +7,9 @@ class ATestComponent extends Component {}
 
 @RegisterComponent
 class BTestComponent extends Component {}
+
+@RegisterComponent
+class CTestComponent extends Component {}
 
 class TestSystemA extends System {
     public entities = this.query([Has(ATestComponent)]);
@@ -17,6 +20,15 @@ class TestSystemA extends System {
 
 class TestSystemB extends System {
     public entities = this.query([Has(ATestComponent), Has(BTestComponent)]);
+
+    run() {
+        // no op
+    }
+}
+
+class TestSystemABNoC extends System {
+    public justA = this.query([Has(ATestComponent), Without(CTestComponent)]);
+    public justB = this.query([Has(BTestComponent), Without(CTestComponent)]);
 
     run() {
         // no op
@@ -35,8 +47,7 @@ describe('Query', () => {
                 );
             }
         }
-        const world = World.create()
-            .addSystem(TestSystemCheckingComponents);
+        const world = World.create().addSystem(TestSystemCheckingComponents);
         const inst = world.getSystem(TestSystemCheckingComponents);
 
         EntityBuilder.create(world).with(ATestComponent).build();
@@ -60,6 +71,19 @@ describe('Query', () => {
         world.run();
 
         expect(inst.entities.added.length).toEqual(1);
+    });
+
+    it('gets newly matching entities in two different queries on frame 1', () => {
+        const world = World.create().addSystem(TestSystemABNoC);
+        const inst = world.getSystem(TestSystemABNoC);
+
+        EntityBuilder.create(world).with(ATestComponent).build();
+        EntityBuilder.create(world).with(BTestComponent).build();
+
+        world.run();
+
+        expect(inst.justA.current.length).toEqual(1);
+        expect(inst.justB.current.length).toEqual(1);
     });
 
     it('gets newly matching entities in added query result on the next frame 2', () => {
@@ -98,8 +122,7 @@ describe('Query', () => {
                 );
             }
         }
-        const world = World.create()
-            .addSystem(TestSystemCheckingComponents);
+        const world = World.create().addSystem(TestSystemCheckingComponents);
         const inst = world.getSystem(TestSystemCheckingComponents);
 
         EntityBuilder.create(world).with(ATestComponent).build();
@@ -113,9 +136,7 @@ describe('Query', () => {
         const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
 
         entity.removeComponent(ATestComponent);
 
@@ -128,9 +149,7 @@ describe('Query', () => {
         const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
 
         entity.removeComponent(ATestComponent);
 
@@ -144,9 +163,7 @@ describe('Query', () => {
         const world = World.create().addSystem(TestSystemA);
         const inst = world.getSystem(TestSystemA);
 
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
 
         entity.destroy();
 
@@ -166,13 +183,10 @@ describe('Query', () => {
                 );
             }
         }
-        const world = World.create()
-            .addSystem(TestSystemCheckingComponents);
+        const world = World.create().addSystem(TestSystemCheckingComponents);
         const inst = world.getSystem(TestSystemCheckingComponents);
 
-        const entity = EntityBuilder.create(world)
-            .with(ATestComponent)
-            .build();
+        const entity = EntityBuilder.create(world).with(ATestComponent).build();
 
         entity.destroy();
 

@@ -1,6 +1,44 @@
 import { Mask } from '../src/mask';
 
 describe('Mask', () => {
+    it('flipping on first bit gets expected result', () => {
+        const mask = new Mask(1);
+
+        mask.flipOn(0);
+
+        expect(mask.mask[0]).toEqual(1);
+    });
+
+    it('flipping on second bit gets expected result', () => {
+        const mask = new Mask(1);
+
+        mask.flipOn(1);
+
+        expect(mask.mask[0]).toEqual(2);
+    });
+
+    it('flipping on thirty-first bit gets expected result', () => {
+        const mask = new Mask(32);
+
+        mask.flipOn(31);
+
+        expect(mask.mask[0]).toEqual(2147483648);
+    });
+
+    it('works with edge case that uses 31st bit', () => {
+        const mask = new Mask(64);
+
+        mask.flipOn(31);
+        mask.flipOn(33);
+        mask.flipOn(1);
+
+        const mask2 = new Mask(64);
+
+        mask2.flipOn(31);
+
+        expect(mask2.fulfilledBy(mask)).toEqual(true);
+    });
+
     it('empty returns correctly', () => {
         const mask = new Mask(64);
         mask.flipAllToOne();

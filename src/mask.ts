@@ -64,7 +64,7 @@ export class Mask {
         requiredMask: number
     ): boolean => {
         return (
-            (checkingMask & requiredMask) === requiredMask ||
+            (checkingMask & requiredMask) >>> 0 === requiredMask ||
             checkingMask === requiredMask // second condition checking if they're both 0
         );
     };
@@ -83,7 +83,8 @@ export class Mask {
      * @param bitPosition The bit flag to flip, typically a componentId.
      */
     flipOn = (bitPosition: number) => {
-        this._mask[Math.floor(bitPosition / 32)] |= 1 << bitPosition % 32;
+        this._mask[Math.floor(bitPosition / 32)] |=
+            (1 << bitPosition % 32) >>> 0;
     };
 
     /**
@@ -91,7 +92,10 @@ export class Mask {
      * @param bitPosition The bit flag to flip, typically a componentId.
      */
     flipOff = (bitPosition: number) => {
-        this._mask[Math.floor(bitPosition / 32)] &= ~(1 << bitPosition % 32);
+        this._mask[Math.floor(bitPosition / 32)] &= ~(
+            (1 << bitPosition % 32) >>>
+            0
+        );
     };
 
     toString(): string {
