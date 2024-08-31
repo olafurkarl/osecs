@@ -95,7 +95,7 @@ const initImpl = (
     }
     Component.ComponentFieldMap[className].set(propertyKey, {
         fieldName: propertyKey,
-        defaultValue
+        defaultValue,
     });
 };
 

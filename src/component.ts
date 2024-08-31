@@ -6,6 +6,7 @@ export type ComponentName = string;
 export type ComponentField = {
     fieldName: string;
     defaultValue?: unknown;
+    optional?: boolean;
 };
 /**
  * Component that can be attached to entities.
@@ -39,8 +40,8 @@ export abstract class Component {
         const initializers =
             Component.ComponentFieldInitializeMap[this.constructor.name];
 
-        fields.forEach(({ fieldName }) => {
-            if (typeof values[fieldName] === 'undefined') {
+        fields.forEach(({ fieldName, optional }) => {
+            if (!optional && typeof values[fieldName] === 'undefined') {
                 throw new Error(
                     `Value not provided for ${fieldName} on component ${this.constructor.name}.`
                 );
