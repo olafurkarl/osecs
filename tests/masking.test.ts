@@ -105,12 +105,12 @@ describe('Masking', () => {
         world.run();
         const testSystemInst = world.getSystem(TestSystemA);
         expect(testSystemInst.getEntities().length).toEqual(1);
-        expect(
-            testSystemInst.testQuery.entities
-                .entries()
-                .next()
-                .value[1].equals(entity)
-        ).toEqual(true);
+        const testEntity = testSystemInst.testQuery.entities.entries().next()
+            .value?.[1];
+        if (!testEntity) {
+            throw new Error('Test failed: no entity found.');
+        }
+        expect(entity.equals(testEntity)).toEqual(true);
     });
 
     it('gets entity if it has a different but matching aspect mask', () => {
