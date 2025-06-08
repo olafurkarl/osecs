@@ -2,7 +2,7 @@
     "name": "osecs",
     "version": "0.0.36",
     "description": "Oli's Simple ECS",
-    "types": "./dist/esm/src/index.d.ts",
+    "types": "./dist/index.d.ts",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
