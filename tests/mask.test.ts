@@ -39,6 +39,19 @@ describe('Mask', () => {
         expect(mask2.fulfilledBy(mask)).toEqual(true);
     });
 
+    it('works with edge case that uses 32nd bit', () => {
+        const mask = new Mask(64);
+
+        mask.flipOn(2);
+        mask.flipOn(33);
+
+        const mask2 = new Mask(64);
+
+        mask2.flipOn(1);
+
+        expect(mask.fulfills(mask2)).toEqual(true);
+    });
+
     it('empty returns correctly', () => {
         const mask = new Mask(64);
         mask.flipAllToOne();
@@ -119,6 +132,16 @@ describe('Mask', () => {
 
         expect(mask.fulfilledBy(mask2)).toEqual(false);
         expect(mask.fulfills(mask2)).toEqual(true);
+    });
+
+    it('correctly flips all bits to one in a mask larger than 1', () => {
+        const mask = new Mask(33);
+
+        mask.flipAllToOne();
+
+        expect(mask.toString()).toEqual(
+            '|11111111111111111111111111111111|11111111111111111111111111111111|'
+        );
     });
 });
 

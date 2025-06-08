@@ -8,7 +8,7 @@
     "module": "./dist/index.js",
     "scripts": {
         "build": "tsup src --dts",
-        "watch": "watch 'npm run build-esm'",
+        "watch": "tsup src --dts --watch",
         "test": "jest --env=node --colors --coverage test",
         "lint": "eslint src --fix --ext .ts",
         "list-files": "tsc --listFiles --noEmit",

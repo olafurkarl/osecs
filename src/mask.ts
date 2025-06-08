@@ -74,7 +74,7 @@ export class Mask {
      */
     flipAllToOne = () => {
         for (let i = 0; i < this._mask.length; i += 1) {
-            this._mask[0] = ~0 >>> 0; // all bits 1
+            this._mask[i] = ~0 >>> 0; // all bits 1
         }
     };
 
@@ -102,10 +102,13 @@ export class Mask {
         const decToBin = (dec: number) => {
             return (dec >>> 0).toString(2);
         };
-        let string = '';
-        this.mask.forEach((m) => {
-            string = decToBin(m) + string;
-        });
+        let string = '|';
+        for (const mask of this.mask) {
+            const stringMask = decToBin(mask);
+            const missingLength = 32 - stringMask.length;
+            string += stringMask.padEnd(missingLength, '0');
+            string += '|';
+        }
         return string;
     }
 

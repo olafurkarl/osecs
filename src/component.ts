@@ -95,14 +95,25 @@ export type ComponentArgs<C> = {
 };
 export type ComponentConstructor = { new (...args: any[]): Component };
 
+export const registerComponentWithSpecificId = <T extends ComponentConstructor>(
+    constructor: T,
+    id: number
+) => {
+    registerComponent(constructor, id);
+};
+
 export function RegisterComponent<T extends ComponentConstructor>(
     constructor: T
 ): any {
     Component.maxId++;
     const newComponentId = Component.maxId;
-    constructor.prototype.componentId = newComponentId;
+    registerComponent(constructor, newComponentId);
+}
 
+const registerComponent = (constructor: any, newComponentId: number) => {
+    constructor.prototype.componentId = newComponentId;
     Component.ComponentIdMap[constructor.name] = newComponentId;
+
     if (!Component.ComponentFieldMap[constructor.name]) {
         Component.ComponentFieldMap[constructor.name] = new Map();
     }
