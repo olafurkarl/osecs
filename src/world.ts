@@ -127,6 +127,11 @@ export class World {
     };
 
     mapEntity(entity: Entity) {
+        if (this.entities.has(entity.id)) {
+            throw new Error(
+                `Entity with id "${entity.id}" already exists in the world.`
+            );
+        }
         this.entities.set(entity.id, entity);
     }
 

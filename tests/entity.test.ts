@@ -5,6 +5,16 @@ class ATestComponent extends Component {
     @field declare test: boolean;
 }
 
+test('throws error when spawning entity with duplicate id', () => {
+    const world = World.create();
+
+    world.spawnEntity({ id: 'duplicate' }).build();
+
+    expect(() => {
+        world.spawnEntity({ id: 'duplicate' }).build();
+    }).toThrow('Entity with id "duplicate" already exists in the world.');
+});
+
 test('upsertComponent updates data on entity', () => {
     const world = World.create();
 
