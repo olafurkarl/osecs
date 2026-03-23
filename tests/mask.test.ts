@@ -47,7 +47,7 @@ describe('Mask', () => {
 
         const mask2 = new Mask(64);
 
-        mask2.flipOn(1);
+        mask2.flipOn(2);
 
         expect(mask.fulfills(mask2)).toEqual(true);
     });

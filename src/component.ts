@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Entity } from './entity';
+import { pendingFields, pendingInitializers } from './decorators';
 
 export type ComponentId = number;
 export type ComponentName = string;
@@ -103,11 +104,42 @@ export const registerComponentWithSpecificId = <T extends ComponentConstructor>(
 };
 
 export function RegisterComponent<T extends ComponentConstructor>(
-    constructor: T
-): any {
+    value: T,
+    _context: ClassDecoratorContext
+): void {
     Component.maxId++;
     const newComponentId = Component.maxId;
-    registerComponent(constructor, newComponentId);
+    registerComponent(value, newComponentId);
+
+    // Process pending field registrations from member decorators
+    const className = value.name;
+    const fields = pendingFields.splice(0);
+    for (const f of fields) {
+        Component.ComponentFieldMap[className].set(f.fieldName, f);
+    }
+
+    // Process pending initializer mappings from @initializeAs
+    const initializers = pendingInitializers.splice(0);
+    if (initializers.length > 0) {
+        if (!Component.ComponentFieldInitializeMap[className]) {
+            Component.ComponentFieldInitializeMap[className] = new Map();
+        }
+        for (const init of initializers) {
+            if (
+                !Component.ComponentFieldInitializeMap[className].has(
+                    init.initFrom
+                )
+            ) {
+                Component.ComponentFieldInitializeMap[className].set(
+                    init.initFrom,
+                    []
+                );
+            }
+            Component.ComponentFieldInitializeMap[className]
+                .get(init.initFrom)
+                ?.push(init.field);
+        }
+    }
 }
 
 const registerComponent = (constructor: any, newComponentId: number) => {

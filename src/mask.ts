@@ -105,8 +105,7 @@ export class Mask {
         let string = '|';
         for (const mask of this.mask) {
             const stringMask = decToBin(mask);
-            const missingLength = 32 - stringMask.length;
-            string += stringMask.padEnd(missingLength, '0');
+            string += stringMask.padEnd(32, '0');
             string += '|';
         }
         return string;

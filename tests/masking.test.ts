@@ -192,13 +192,17 @@ describe('Masking', () => {
             .build();
         world.run();
 
-        expect(entity.componentMask.maskString).toEqual('11');
+        expect(entity.componentMask.maskString).toEqual(
+            '|11000000000000000000000000000000|'
+        );
 
         entity.purge();
 
         world.run();
 
-        expect(entity.componentMask.maskString).toEqual('0');
+        expect(entity.componentMask.maskString).toEqual(
+            '|00000000000000000000000000000000|'
+        );
 
         const testSystemInst = world.getSystem(TestSystemA) as TestSystem;
 

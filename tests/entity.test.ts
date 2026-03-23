@@ -2,7 +2,7 @@ import { RegisterComponent, Component, World, field } from '../src';
 
 @RegisterComponent
 class ATestComponent extends Component {
-    @field declare test: boolean;
+    @field test!: boolean;
 }
 
 test('throws error when spawning entity with duplicate id', () => {

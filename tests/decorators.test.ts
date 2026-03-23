@@ -12,12 +12,12 @@ import { validate } from '../src/decorators';
 
 @RegisterComponent
 class TestParentComponent extends Component {
-    @field @children declare children: Set<Entity>;
+    @children accessor children!: Set<Entity>;
 }
 
 @RegisterComponent
 class TestChildComponent extends Component {
-    @field @parent(TestParentComponent, 'children') declare parent: Entity;
+    @parent(TestParentComponent, 'children') accessor parent!: Entity;
 }
 
 describe('Parent decorator', () => {
@@ -114,7 +114,7 @@ const validateAngle = (angle: number) => {
 
 @RegisterComponent
 class TestComponentWithValidatedField extends Component {
-    @field @validate(validateAngle) declare angle: number;
+    @validate(validateAngle) accessor angle!: number;
 }
 describe('Validator', () => {
     test('throws error if validation fails', () => {
