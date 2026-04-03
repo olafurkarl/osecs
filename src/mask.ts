@@ -73,9 +73,7 @@ export class Mask {
      * Flips all bits in the mask to 1
      */
     flipAllToOne = () => {
-        for (let i = 0; i < this._mask.length; i += 1) {
-            this._mask[i] = ~0 >>> 0; // all bits 1
-        }
+        this._mask.fill(~0 >>> 0);
     };
 
     /**
