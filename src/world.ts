@@ -153,6 +153,7 @@ export class World {
     processGraveyard() {
         this.entitiesToBePurged.forEach((entity) => {
             entity.purge();
+            this.entities.delete(entity.id);
         });
         this.entitiesToBePurged = this.deadEntities.slice();
         this.deadEntities.length = 0;
