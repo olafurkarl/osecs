@@ -52,25 +52,27 @@ class LifetimeComponent extends Component {
 }
 
 class MovementSystem extends System {
-    private q = this.query([
-        Has(PositionComponent),
-        Has(DirectionComponent)
-    ]);
+    private q = this.queryWith(
+        [Has(PositionComponent), Has(DirectionComponent)],
+        [PositionComponent, DirectionComponent]
+    );
     run(delta: number) {
-        this.q.forEach((e) => {
-            const p = e.get(PositionComponent);
-            const d = e.get(DirectionComponent);
-            p.x += d.x * delta;
-            p.y += d.y * delta;
-        });
+        this.q.forEachWith(
+            (_e, p: PositionComponent, d: DirectionComponent) => {
+                p.x += d.x * delta;
+                p.y += d.y * delta;
+            }
+        );
     }
 }
 
 class DataSystem extends System {
-    private q = this.query([Has(ComflabulationComponent)]);
+    private q = this.queryWith(
+        [Has(ComflabulationComponent)],
+        [ComflabulationComponent]
+    );
     run(delta: number) {
-        this.q.forEach((e) => {
-            const c = e.get(ComflabulationComponent);
+        this.q.forEachWith((_e, c: ComflabulationComponent) => {
             c.thingy += delta;
             c.dingy += 1;
             c.mingy = !c.mingy;
@@ -79,10 +81,9 @@ class DataSystem extends System {
 }
 
 class HealthSystem extends System {
-    private q = this.query([Has(HealthComponent)]);
+    private q = this.queryWith([Has(HealthComponent)], [HealthComponent]);
     run(delta: number) {
-        this.q.forEach((e) => {
-            const h = e.get(HealthComponent);
+        this.q.forEachWith((_e, h: HealthComponent) => {
             if (h.hp < h.maxHp) {
                 h.hp = Math.min(h.maxHp, h.hp + delta);
             }
@@ -91,46 +92,52 @@ class HealthSystem extends System {
 }
 
 class DamageSystem extends System {
-    private q = this.query([Has(HealthComponent), Has(DamageComponent)]);
+    private q = this.queryWith(
+        [Has(HealthComponent), Has(DamageComponent)],
+        [HealthComponent, DamageComponent]
+    );
     run() {
-        this.q.forEach((e) => {
-            const h = e.get(HealthComponent);
-            const d = e.get(DamageComponent);
-            h.hp -= d.dmg;
-        });
+        this.q.forEachWith(
+            (_e, h: HealthComponent, d: DamageComponent) => {
+                h.hp -= d.dmg;
+            }
+        );
     }
 }
 
 class SpriteSystem extends System {
-    private q = this.query([Has(SpriteComponent), Has(PositionComponent)]);
+    private q = this.queryWith(
+        [Has(SpriteComponent), Has(PositionComponent)],
+        [SpriteComponent, PositionComponent]
+    );
     run() {
         let sink = 0;
-        this.q.forEach((e) => {
-            const s = e.get(SpriteComponent);
-            const p = e.get(PositionComponent);
-            sink += s.sprite.length + p.x;
-        });
-        // prevent dead-code elimination
+        this.q.forEachWith(
+            (_e, s: SpriteComponent, p: PositionComponent) => {
+                sink += s.sprite.length + p.x;
+            }
+        );
         (globalThis as any).__sink = sink;
     }
 }
 
 class LifetimeSystem extends System {
-    private q = this.query([Has(LifetimeComponent)]);
+    private q = this.queryWith([Has(LifetimeComponent)], [LifetimeComponent]);
     run(delta: number) {
-        this.q.forEach((e) => {
-            const l = e.get(LifetimeComponent);
+        this.q.forEachWith((_e, l: LifetimeComponent) => {
             l.ttl -= delta;
         });
     }
 }
 
 class CollisionSystem extends System {
-    private q = this.query([Has(PositionComponent), Has(HealthComponent)]);
+    private q = this.queryWith(
+        [Has(PositionComponent), Has(HealthComponent)],
+        [PositionComponent]
+    );
     run() {
         let close = 0;
-        this.q.forEach((e) => {
-            const p = e.get(PositionComponent);
+        this.q.forEachWith((_e, p: PositionComponent) => {
             if (Math.abs(p.x) + Math.abs(p.y) < 1) close++;
         });
         (globalThis as any).__close = close;
@@ -264,20 +271,31 @@ const benchmarks: Array<{
             'Iterate N entities once and read three components per entity.',
         fn: (n) => {
             class ThreeSystem extends System {
-                private q = this.query([
-                    Has(PositionComponent),
-                    Has(DirectionComponent),
-                    Has(ComflabulationComponent)
-                ]);
+                private q = this.queryWith(
+                    [
+                        Has(PositionComponent),
+                        Has(DirectionComponent),
+                        Has(ComflabulationComponent)
+                    ],
+                    [
+                        PositionComponent,
+                        DirectionComponent,
+                        ComflabulationComponent
+                    ]
+                );
                 run() {
-                    this.q.forEach((e) => {
-                        const p = e.get(PositionComponent);
-                        const d = e.get(DirectionComponent);
-                        const c = e.get(ComflabulationComponent);
-                        p.x += d.x;
-                        p.y += d.y;
-                        c.thingy += 1;
-                    });
+                    this.q.forEachWith(
+                        (
+                            _e,
+                            p: PositionComponent,
+                            d: DirectionComponent,
+                            c: ComflabulationComponent
+                        ) => {
+                            p.x += d.x;
+                            p.y += d.y;
+                            c.thingy += 1;
+                        }
+                    );
                 }
             }
             const world = World.create().addSystem(ThreeSystem);

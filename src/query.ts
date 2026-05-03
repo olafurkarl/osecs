@@ -1,4 +1,5 @@
 import { Aspect, HasAspect, WithoutAspect } from './aspect';
+import { Component, ComponentConstructor } from './component';
 import { Entity, EntityId } from './entity';
 import { v4 as uuidv4 } from 'uuid';
 import { Mask } from './mask';
@@ -29,6 +30,17 @@ export class Query {
     private _entityList: Array<Entity | null> = [];
     private _entityListIndex: Map<EntityId, number> = new Map();
     private _holes = 0;
+
+    /**
+     * If non-null, parallel arrays of component instances kept in sync with
+     * _entityList so forEachWith can hand component refs to the callback
+     * without an entity.get() per iteration. _boundComponentArrays[k][i] is
+     * the instance of _boundComponents[k] on _entityList[i] (null when the
+     * slot is tombstoned).
+     */
+    private _boundComponents: ComponentConstructor[] | null = null;
+    private _boundComponentArrays: Array<Array<Component | null>> | null =
+        null;
 
     /**
      * Used by World.refreshQueriesForEntity to dedupe per-entity work without
@@ -163,6 +175,14 @@ export class Query {
             this._entities.set(entity.id, entity);
             this._entityListIndex.set(entity.id, this._entityList.length);
             this._entityList.push(entity);
+            if (this._boundComponentArrays !== null) {
+                const ctors = this._boundComponents!;
+                for (let k = 0; k < ctors.length; k++) {
+                    this._boundComponentArrays[k].push(
+                        entity.getComponent(ctors[k]) ?? null
+                    );
+                }
+            }
             entity.registerQuery(this);
         }
     }
@@ -177,6 +197,11 @@ export class Query {
             const idx = this._entityListIndex.get(entity.id);
             if (idx !== undefined) {
                 this._entityList[idx] = null;
+                if (this._boundComponentArrays !== null) {
+                    for (const arr of this._boundComponentArrays) {
+                        arr[idx] = null;
+                    }
+                }
                 this._entityListIndex.delete(entity.id);
                 this._holes++;
             }
@@ -215,12 +240,13 @@ export class Query {
     }
 
     /**
-     * Repack _entityList in place so tombstoned slots don't accumulate. Called
-     * from flushQuery — at most once per world tick — keeping per-iteration
-     * null-check overhead bounded.
+     * Repack _entityList (and any bound component arrays) in place so
+     * tombstoned slots don't accumulate. Called from flushQuery — at most once
+     * per world tick — keeping per-iteration null-check overhead bounded.
      */
     private compact() {
         const list = this._entityList;
+        const bound = this._boundComponentArrays;
         let write = 0;
         for (let read = 0; read < list.length; read++) {
             const e = list[read];
@@ -228,11 +254,101 @@ export class Query {
             if (write !== read) {
                 list[write] = e;
                 this._entityListIndex.set(e.id, write);
+                if (bound !== null) {
+                    for (const arr of bound) arr[write] = arr[read];
+                }
             }
             write++;
         }
         list.length = write;
+        if (bound !== null) for (const arr of bound) arr.length = write;
         this._holes = 0;
+    }
+
+    /**
+     * Bind a fixed list of components to this query so forEachWith can deliver
+     * them directly to the callback. Call once before the query starts being
+     * used; subsequent calls throw. Components don't have to overlap with the
+     * query's aspects — but the entities must actually have them, otherwise
+     * the callback receives null in that slot.
+     */
+    bindComponents(components: ComponentConstructor[]): this {
+        if (this._boundComponents !== null) {
+            throw new Error('Query already has bound components.');
+        }
+        this._boundComponents = components.slice();
+        this._boundComponentArrays = components.map(() => []);
+        // Backfill any entities already registered.
+        const list = this._entityList;
+        for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            for (let k = 0; k < components.length; k++) {
+                this._boundComponentArrays[k].push(
+                    e === null ? null : (e.getComponent(components[k]) ?? null)
+                );
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Iterate, handing each entity its bound component instances directly —
+     * no entity.get() per element. Specialized fast paths for 1/2/3
+     * components cover the typical system-loop shapes; longer tuples fall
+     * through to a generic loop.
+     */
+    forEachWith(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        callback: (entity: Entity, ...components: any[]) => void
+    ): void {
+        const list = this._entityList;
+        const bound = this._boundComponentArrays;
+        if (bound === null) {
+            throw new Error(
+                'forEachWith called before bindComponents — bind components first.'
+            );
+        }
+        switch (bound.length) {
+            case 1: {
+                const a0 = bound[0];
+                for (let i = 0; i < list.length; i++) {
+                    const e = list[i];
+                    if (e !== null) callback(e, a0[i]);
+                }
+                return;
+            }
+            case 2: {
+                const a0 = bound[0];
+                const a1 = bound[1];
+                for (let i = 0; i < list.length; i++) {
+                    const e = list[i];
+                    if (e !== null) callback(e, a0[i], a1[i]);
+                }
+                return;
+            }
+            case 3: {
+                const a0 = bound[0];
+                const a1 = bound[1];
+                const a2 = bound[2];
+                for (let i = 0; i < list.length; i++) {
+                    const e = list[i];
+                    if (e !== null) callback(e, a0[i], a1[i], a2[i]);
+                }
+                return;
+            }
+            default: {
+                for (let i = 0; i < list.length; i++) {
+                    const e = list[i];
+                    if (e === null) continue;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const comps: any[] = new Array(bound.length);
+                    for (let k = 0; k < bound.length; k++) {
+                        comps[k] = bound[k][i];
+                    }
+                    callback(e, ...comps);
+                }
+            }
+        }
     }
 
     flushQuery = () => {

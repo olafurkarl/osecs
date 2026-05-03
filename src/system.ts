@@ -1,6 +1,7 @@
 import { World } from './world';
 import { v4 as uuidv4 } from 'uuid';
 import { Aspect } from './aspect';
+import { ComponentConstructor } from './component';
 import { Query } from './query';
 import { EntityBuilder } from '.';
 import { EntityOpts } from './entity';
@@ -29,6 +30,18 @@ export abstract class System {
         const query = new Query(aspects);
         this._queries.push(query);
         return query;
+    }
+
+    /**
+     * Convenience for `this.query(aspects).bindComponents(components)` —
+     * returns a Query whose forEachWith hands the listed components straight
+     * to the callback.
+     */
+    protected queryWith(
+        aspects: Aspect[],
+        components: ComponentConstructor[]
+    ): Query {
+        return this.query(aspects).bindComponents(components);
     }
 
     protected spawnEntity(opts?: EntityOpts) {
