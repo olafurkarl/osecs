@@ -1,7 +1,7 @@
 {
   "runtime": "node 24.3.0 / bun 1.3.11",
   "platform": "linux x64",
-  "date": "2026-05-03T18:24:36.801Z",
+  "date": "2026-05-03T18:25:42.026Z",
   "results": [
     {
       "name": "CreateEntities",
@@ -9,57 +9,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 3590,
+          "medianNs": 2964.5,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 8175,
+          "medianNs": 7019.5,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 15030,
+          "medianNs": 13645,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 21035,
+          "medianNs": 20974.5,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 20885,
+          "medianNs": 19125,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 42014.5,
+          "medianNs": 39349.5,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 163779,
+          "medianNs": 161824,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 691595,
+          "medianNs": 675905,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 4111219,
+          "medianNs": 3706352,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 18394716.5,
+          "medianNs": 16973216.5,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 91630448,
+          "medianNs": 90796314,
           "iters": 3
         }
       ]
@@ -70,57 +70,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 1420,
+          "medianNs": 1370,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 2645,
+          "medianNs": 2625,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 4965,
+          "medianNs": 4635,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 6029.5,
+          "medianNs": 7045,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 8355,
+          "medianNs": 13215,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 15299.5,
+          "medianNs": 13785,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 70364,
+          "medianNs": 59690,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 369742,
+          "medianNs": 294768,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 1268480,
+          "medianNs": 1497639,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 6609490,
+          "medianNs": 8387021.5,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 30486580,
+          "medianNs": 35704881,
           "iters": 3
         }
       ]
@@ -131,57 +131,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 455,
+          "medianNs": 420,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 355,
+          "medianNs": 330,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 370,
+          "medianNs": 360,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 470,
+          "medianNs": 510,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 835,
+          "medianNs": 860,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 1400,
+          "medianNs": 1510,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 5160,
+          "medianNs": 5110,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 23670,
+          "medianNs": 20035,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 126829,
+          "medianNs": 99639,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 1189276,
+          "medianNs": 1659818,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 3680542,
+          "medianNs": 6317512,
           "iters": 3
         }
       ]
@@ -197,52 +197,52 @@
         },
         {
           "entities": 4,
-          "medianNs": 260,
+          "medianNs": 270,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 400,
+          "medianNs": 360,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 560,
+          "medianNs": 530,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 930,
+          "medianNs": 860,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 1620,
+          "medianNs": 1604.5,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 5745,
+          "medianNs": 5190,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 33589.5,
+          "medianNs": 24630,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 168208,
+          "medianNs": 201569,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 2306317.5,
+          "medianNs": 2135119,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 8457646,
+          "medianNs": 8433286,
           "iters": 3
         }
       ]
@@ -253,17 +253,17 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 270,
+          "medianNs": 320,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 270,
+          "medianNs": 280,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 400,
+          "medianNs": 380,
           "iters": 500
         },
         {
@@ -273,37 +273,37 @@
         },
         {
           "entities": 32,
-          "medianNs": 1010,
+          "medianNs": 990,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 1800,
+          "medianNs": 1790,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 6420,
+          "medianNs": 6290,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 34109.5,
+          "medianNs": 25804.5,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 235288,
+          "medianNs": 252008,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 2497836,
+          "medianNs": 1178281,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 9002842,
+          "medianNs": 5178861,
           "iters": 3
         }
       ]
@@ -314,52 +314,52 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 270,
+          "medianNs": 380,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 420,
+          "medianNs": 500,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 610,
+          "medianNs": 700,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 1230,
+          "medianNs": 1170,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 3690,
+          "medianNs": 2040,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 4690,
+          "medianNs": 3925,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 15684.5,
+          "medianNs": 15825,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 79779.5,
+          "medianNs": 79799.5,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 495476,
+          "medianNs": 396317,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 2584505.5,
+          "medianNs": 2557630.5,
           "iters": 6
         }
       ]
@@ -370,57 +370,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 730,
+          "medianNs": 370,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 450,
+          "medianNs": 430,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 550,
+          "medianNs": 600,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 810,
+          "medianNs": 950,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 1450,
+          "medianNs": 1650,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 2660,
+          "medianNs": 2980,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 9600,
+          "medianNs": 10460,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 49875,
+          "medianNs": 53190,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 383727,
+          "medianNs": 421326,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 2715619.5,
+          "medianNs": 3828171.5,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 17122061,
+          "medianNs": 17487548,
           "iters": 3
         }
       ]
@@ -431,57 +431,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 210,
+          "medianNs": 280,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 300,
+          "medianNs": 370,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 400,
+          "medianNs": 485,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 650,
+          "medianNs": 690,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 1160,
+          "medianNs": 1120,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 2160,
+          "medianNs": 2110,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 7910,
+          "medianNs": 7555,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 88504,
+          "medianNs": 41774.5,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 834853,
+          "medianNs": 784624,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 5634132.5,
+          "medianNs": 4861398,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 18649129,
+          "medianNs": 20002179,
           "iters": 3
         }
       ]
@@ -492,57 +492,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 910,
+          "medianNs": 925,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 1270,
+          "medianNs": 1295,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 1910,
+          "medianNs": 1770,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 2970,
+          "medianNs": 2660,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 5845,
+          "medianNs": 4805,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 10580,
+          "medianNs": 8860,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 42345,
+          "medianNs": 35885,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 484381.5,
+          "medianNs": 320877.5,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 3105027,
+          "medianNs": 3050237,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 18264377.5,
+          "medianNs": 15995444,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 46999645,
+          "medianNs": 60246185,
           "iters": 3
         }
       ]
@@ -553,57 +553,57 @@
       "samples": [
         {
           "entities": 1,
-          "medianNs": 1090,
+          "medianNs": 720,
           "iters": 500
         },
         {
           "entities": 4,
-          "medianNs": 960,
+          "medianNs": 760,
           "iters": 500
         },
         {
           "entities": 8,
-          "medianNs": 1070,
+          "medianNs": 940,
           "iters": 500
         },
         {
           "entities": 16,
-          "medianNs": 1520,
+          "medianNs": 1360,
           "iters": 500
         },
         {
           "entities": 32,
-          "medianNs": 2390,
+          "medianNs": 2230,
           "iters": 200
         },
         {
           "entities": 64,
-          "medianNs": 4180,
+          "medianNs": 3930,
           "iters": 200
         },
         {
           "entities": 256,
-          "medianNs": 15625,
+          "medianNs": 14645,
           "iters": 100
         },
         {
           "entities": 1024,
-          "medianNs": 102509,
+          "medianNs": 69304,
           "iters": 40
         },
         {
           "entities": 4096,
-          "medianNs": 454037,
+          "medianNs": 476116,
           "iters": 15
         },
         {
           "entities": 16384,
-          "medianNs": 4932397.5,
+          "medianNs": 4787894.5,
           "iters": 6
         },
         {
           "entities": 65536,
-          "medianNs": 36186297,
+          "medianNs": 37724315,
           "iters": 3
         }
       ]
