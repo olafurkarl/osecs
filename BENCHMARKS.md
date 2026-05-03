@@ -5,7 +5,7 @@ Each row reports the **median** wall time of one operation at the given entity c
 
 ### Environment
 
-- Date: `2026-05-03T18:35:12.210Z`
+- Date: `2026-05-03T18:41:00.044Z`
 - Runtime: `node 24.3.0 / bun 1.3.11`
 - Platform: `linux x64`
 - CPU: AMD Ryzen 7 8700F (8-core)
@@ -18,17 +18,17 @@ Time to create N entities, each with 3 components (Position, Direction, Comflabu
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 2.93us | 2.93us |
-| 4 | 7.36us | 1.84us |
-| 8 | 14.74us | 1.84us |
-| 16 | 19.95us | 1.25us |
-| 32 | 19.96us | 624ns |
-| 64 | 38.26us | 598ns |
-| 256 | 162.24us | 634ns |
-| 1.0K | 634.53us | 620ns |
-| 4.1K | 5.37ms | 1.31us |
-| 16.4K | 18.46ms | 1.13us |
-| 65.5K | 88.42ms | 1.35us |
+| 1 | 2.69us | 2.69us |
+| 4 | 7.06us | 1.76us |
+| 8 | 13.76us | 1.72us |
+| 16 | 19.06us | 1.19us |
+| 32 | 19.02us | 595ns |
+| 64 | 37.97us | 593ns |
+| 256 | 151.95us | 594ns |
+| 1.0K | 642.05us | 627ns |
+| 4.1K | 4.94ms | 1.21us |
+| 16.4K | 16.38ms | 1000ns |
+| 65.5K | 110.06ms | 1.68us |
 
 ## DestroyEntities
 
@@ -36,17 +36,17 @@ Time to destroy N pre-created entities (includes graveyard processing on world.r
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 2.19us | 2.19us |
-| 4 | 2.25us | 563ns |
-| 8 | 2.80us | 350ns |
-| 16 | 4.26us | 267ns |
-| 32 | 9.77us | 305ns |
-| 64 | 16.11us | 252ns |
-| 256 | 57.53us | 225ns |
-| 1.0K | 245.93us | 240ns |
-| 4.1K | 1.38ms | 336ns |
-| 16.4K | 6.67ms | 407ns |
-| 65.5K | 31.79ms | 485ns |
+| 1 | 1.65us | 1.65us |
+| 4 | 1.66us | 415ns |
+| 8 | 2.93us | 366ns |
+| 16 | 4.80us | 300ns |
+| 32 | 9.04us | 283ns |
+| 64 | 16.04us | 251ns |
+| 256 | 84.38us | 330ns |
+| 1.0K | 308.59us | 301ns |
+| 4.1K | 1.50ms | 366ns |
+| 16.4K | 6.27ms | 383ns |
+| 65.5K | 26.36ms | 402ns |
 
 ## UnpackOneComponent
 
@@ -54,17 +54,17 @@ Iterate N entities once and read one component per entity.
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 450ns | 450ns |
-| 4 | 230ns | 58ns |
-| 8 | 260ns | 33ns |
-| 16 | 360ns | 23ns |
-| 32 | 480ns | 15ns |
-| 64 | 760ns | 12ns |
-| 256 | 2.47us | 10ns |
-| 1.0K | 10.71us | 10ns |
-| 4.1K | 57.65us | 14ns |
-| 16.4K | 766.58us | 47ns |
-| 65.5K | 3.54ms | 54ns |
+| 1 | 400ns | 400ns |
+| 4 | 270ns | 68ns |
+| 8 | 235ns | 29ns |
+| 16 | 220ns | 14ns |
+| 32 | 300ns | 9ns |
+| 64 | 450ns | 7ns |
+| 256 | 1.06us | 4ns |
+| 1.0K | 2.99us | 3ns |
+| 4.1K | 16.94us | 4ns |
+| 16.4K | 148.55us | 9ns |
+| 65.5K | 1.23ms | 19ns |
 
 ## UnpackTwoComponents
 
@@ -72,17 +72,17 @@ Iterate N entities once and read two components per entity.
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 200ns | 200ns |
-| 4 | 210ns | 53ns |
-| 8 | 260ns | 33ns |
-| 16 | 350ns | 22ns |
-| 32 | 570ns | 18ns |
-| 64 | 1.01us | 16ns |
-| 256 | 3.47us | 14ns |
-| 1.0K | 14.47us | 14ns |
-| 4.1K | 74.75us | 18ns |
-| 16.4K | 1.23ms | 75ns |
-| 65.5K | 5.19ms | 79ns |
+| 1 | 220ns | 220ns |
+| 4 | 180ns | 45ns |
+| 8 | 210ns | 26ns |
+| 16 | 250ns | 16ns |
+| 32 | 360ns | 11ns |
+| 64 | 550ns | 9ns |
+| 256 | 1.77us | 7ns |
+| 1.0K | 6.29us | 6ns |
+| 4.1K | 20.56us | 5ns |
+| 16.4K | 77.95us | 5ns |
+| 65.5K | 982.50us | 15ns |
 
 ## UnpackThreeComponents
 
@@ -90,17 +90,17 @@ Iterate N entities once and read three components per entity.
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 240ns | 240ns |
-| 4 | 250ns | 63ns |
-| 8 | 340ns | 43ns |
-| 16 | 480ns | 30ns |
-| 32 | 700ns | 22ns |
-| 64 | 1.20us | 19ns |
-| 256 | 3.98us | 16ns |
-| 1.0K | 15.94us | 16ns |
-| 4.1K | 67.65us | 17ns |
-| 16.4K | 781.35us | 48ns |
-| 65.5K | 4.43ms | 68ns |
+| 1 | 260ns | 260ns |
+| 4 | 180ns | 45ns |
+| 8 | 210ns | 26ns |
+| 16 | 240ns | 15ns |
+| 32 | 330ns | 10ns |
+| 64 | 520ns | 8ns |
+| 256 | 1.77us | 7ns |
+| 1.0K | 6.26us | 6ns |
+| 4.1K | 37.77us | 9ns |
+| 16.4K | 155.26us | 9ns |
+| 65.5K | 1.09ms | 17ns |
 
 ## RemoveAddComponent
 
@@ -108,16 +108,16 @@ For each of N entities, remove and re-add a component (then flush via world.run)
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 280ns | 280ns |
-| 4 | 420ns | 105ns |
-| 8 | 630ns | 79ns |
-| 16 | 1.14us | 71ns |
-| 32 | 2.12us | 66ns |
-| 64 | 4.03us | 63ns |
-| 256 | 18.36us | 72ns |
-| 1.0K | 83.93us | 82ns |
-| 4.1K | 502.22us | 123ns |
-| 16.4K | 2.53ms | 154ns |
+| 1 | 270ns | 270ns |
+| 4 | 410ns | 103ns |
+| 8 | 620ns | 78ns |
+| 16 | 1.11us | 69ns |
+| 32 | 2.06us | 64ns |
+| 64 | 3.96us | 62ns |
+| 256 | 16.92us | 66ns |
+| 1.0K | 84.28us | 82ns |
+| 4.1K | 400.32us | 98ns |
+| 16.4K | 2.38ms | 145ns |
 
 ## SystemsUpdate
 
@@ -125,17 +125,17 @@ One world.run with two systems (Movement + Data) on N homogeneous entities.
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 480ns | 480ns |
-| 4 | 320ns | 80ns |
-| 8 | 370ns | 46ns |
-| 16 | 510ns | 32ns |
-| 32 | 870ns | 27ns |
-| 64 | 1.56us | 24ns |
-| 256 | 5.56us | 22ns |
-| 1.0K | 25.03us | 24ns |
-| 4.1K | 124.50us | 30ns |
-| 16.4K | 1.59ms | 97ns |
-| 65.5K | 9.38ms | 143ns |
+| 1 | 270ns | 270ns |
+| 4 | 245ns | 61ns |
+| 8 | 230ns | 29ns |
+| 16 | 280ns | 18ns |
+| 32 | 380ns | 12ns |
+| 64 | 585ns | 9ns |
+| 256 | 1.75us | 7ns |
+| 1.0K | 6.03us | 6ns |
+| 4.1K | 30.28us | 7ns |
+| 16.4K | 145.04us | 9ns |
+| 65.5K | 2.34ms | 36ns |
 
 ## SystemsUpdateMixedEntities
 
@@ -143,17 +143,17 @@ One world.run with two systems on N heterogeneous entities (mixed component sets
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 200ns | 200ns |
-| 4 | 250ns | 63ns |
-| 8 | 310ns | 39ns |
-| 16 | 440ns | 28ns |
-| 32 | 780ns | 24ns |
-| 64 | 1.35us | 21ns |
-| 256 | 4.58us | 18ns |
-| 1.0K | 23.28us | 23ns |
-| 4.1K | 173.21us | 42ns |
-| 16.4K | 2.18ms | 133ns |
-| 65.5K | 14.82ms | 226ns |
+| 1 | 190ns | 190ns |
+| 4 | 200ns | 50ns |
+| 8 | 220ns | 28ns |
+| 16 | 250ns | 16ns |
+| 32 | 350ns | 11ns |
+| 64 | 540ns | 8ns |
+| 256 | 1.44us | 6ns |
+| 1.0K | 4.46us | 4ns |
+| 4.1K | 24.11us | 6ns |
+| 16.4K | 124.13us | 8ns |
+| 65.5K | 1.44ms | 22ns |
 
 ## ComplexSystemsUpdate
 
@@ -161,17 +161,17 @@ One world.run with seven systems (Movement, Data, Health, Damage, Sprite, Lifeti
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 805ns | 805ns |
-| 4 | 940ns | 235ns |
-| 8 | 1.16us | 145ns |
-| 16 | 1.65us | 103ns |
-| 32 | 2.48us | 78ns |
-| 64 | 4.42us | 69ns |
-| 256 | 16.18us | 63ns |
-| 1.0K | 160.69us | 157ns |
-| 4.1K | 1.42ms | 348ns |
-| 16.4K | 8.57ms | 523ns |
-| 65.5K | 33.80ms | 516ns |
+| 1 | 690ns | 690ns |
+| 4 | 740ns | 185ns |
+| 8 | 920ns | 115ns |
+| 16 | 1.29us | 81ns |
+| 32 | 2.09us | 65ns |
+| 64 | 3.64us | 57ns |
+| 256 | 6.07us | 24ns |
+| 1.0K | 19.96us | 19ns |
+| 4.1K | 94.61us | 23ns |
+| 16.4K | 688.24us | 42ns |
+| 65.5K | 7.67ms | 117ns |
 
 ## ComplexSystemsUpdateMixedEntities
 
@@ -179,15 +179,15 @@ One world.run with seven systems on N heterogeneous entities.
 
 | Entities | osecs (total) | osecs (per entity) |
 |---------:|--------------:|-------------------:|
-| 1 | 540ns | 540ns |
-| 4 | 580ns | 145ns |
-| 8 | 710ns | 89ns |
-| 16 | 920ns | 58ns |
-| 32 | 1.39us | 43ns |
-| 64 | 2.32us | 36ns |
-| 256 | 8.24us | 32ns |
-| 1.0K | 39.69us | 39ns |
-| 4.1K | 314.94us | 77ns |
-| 16.4K | 2.40ms | 146ns |
-| 65.5K | 19.98ms | 305ns |
+| 1 | 560ns | 560ns |
+| 4 | 510ns | 128ns |
+| 8 | 540ns | 68ns |
+| 16 | 600ns | 38ns |
+| 32 | 740ns | 23ns |
+| 64 | 1.02us | 16ns |
+| 256 | 2.51us | 10ns |
+| 1.0K | 8.52us | 8ns |
+| 4.1K | 38.40us | 9ns |
+| 16.4K | 261.98us | 16ns |
+| 65.5K | 2.35ms | 36ns |
 
