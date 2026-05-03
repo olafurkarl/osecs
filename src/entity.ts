@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { v4 as uuidv4 } from 'uuid';
 import {
     Component,
     ComponentArgs,
@@ -11,6 +10,9 @@ import { Query, QueryId } from './query';
 import { World } from './world';
 
 export type EntityId = string;
+
+let nextEntitySerial = 0;
+const generateEntityId = (): EntityId => `e${nextEntitySerial++}`;
 
 export type IfEquals<T, U, Y = unknown, N = never> = (<G>() => G extends T
     ? 1
@@ -46,7 +48,7 @@ export class Entity {
     private currentQueries = new Map<QueryId, Query>();
 
     constructor(world: World, opts?: EntityOpts) {
-        this.id = opts?.id ?? uuidv4().split('-')[0];
+        this.id = opts?.id ?? generateEntityId();
         this.name = opts?.name ?? 'unnamed';
         this.components = new Map();
         this.world = world;
