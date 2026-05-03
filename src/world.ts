@@ -12,6 +12,12 @@ export class World {
     private systems: System[] = [];
     private queryRegistry: Map<ComponentConstructor, Query[]> = new Map();
     private allQueries: Array<Query> = [];
+    /**
+     * Queries that have only Without aspects don't appear in queryRegistry
+     * under any component, so we keep them in a flat list and check them
+     * on every entity-component change.
+     */
+    private exclusiveOnlyQueries: Array<Query> = [];
     private entities: Map<EntityId, Entity> = new Map();
     private deadEntities: Array<Entity> = [];
     private entitiesToBePurged: Array<Entity> = [];
@@ -30,6 +36,7 @@ export class World {
         this.systems = [];
         this.queryRegistry.clear();
         this.allQueries = [];
+        this.exclusiveOnlyQueries = [];
         this.entities.clear();
         this.deadEntities = [];
         this.entitiesToBePurged = [];
@@ -66,6 +73,9 @@ export class World {
                     this.queryRegistry
                 );
             });
+            if (query.hasOnlyExclusiveAspects) {
+                this.exclusiveOnlyQueries.push(query);
+            }
             this.allQueries.push(query);
         });
     }
@@ -138,6 +148,9 @@ export class World {
         this.queryRegistry.get(component)?.forEach((query: Query) => {
             query.updateRegistry(entity);
         });
+        for (const q of this.exclusiveOnlyQueries) {
+            q.updateRegistry(entity);
+        }
     }
 
     /**
@@ -158,6 +171,11 @@ export class World {
                 seen.add(q);
                 q.updateRegistry(entity);
             }
+        }
+        for (const q of this.exclusiveOnlyQueries) {
+            if (seen.has(q)) continue;
+            seen.add(q);
+            q.updateRegistry(entity);
         }
     }
 

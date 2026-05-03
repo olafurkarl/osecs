@@ -242,6 +242,36 @@ describe('Masking', () => {
         expect(testSystemInst.getEntities().length).toEqual(0);
     });
 
+    it('Without-only query matches entities that lack the excluded component', () => {
+        const TestSystemA = setupSystemType([Without(ATestComponent)]);
+        const world = World.create().addSystem(TestSystemA);
+        const matching = EntityBuilder.create(world)
+            .with(BTestComponent)
+            .build();
+        EntityBuilder.create(world).with(ATestComponent).build();
+        world.run();
+
+        const entities = world.getSystem(TestSystemA).getEntities();
+        expect(entities.length).toEqual(1);
+        expect(entities[0].equals(matching)).toEqual(true);
+    });
+
+    it('Without-only query reflects later component changes', () => {
+        const TestSystemA = setupSystemType([Without(ATestComponent)]);
+        const world = World.create().addSystem(TestSystemA);
+        const entity = EntityBuilder.create(world).with(BTestComponent).build();
+        world.run();
+        expect(world.getSystem(TestSystemA).getEntities().length).toEqual(1);
+
+        entity.addComponent(ATestComponent);
+        world.run();
+        expect(world.getSystem(TestSystemA).getEntities().length).toEqual(0);
+
+        entity.removeComponent(ATestComponent);
+        world.run();
+        expect(world.getSystem(TestSystemA).getEntities().length).toEqual(1);
+    });
+
     it('does not include any entities if it has no aspects', () => {
         const TestSystemA = setupSystemType([]);
         const world = World.create().addSystem(TestSystemA);
