@@ -106,6 +106,23 @@ describe('Parent decorator', () => {
             childEntity
         );
     });
+
+    it('does not register a duplicate cleanup callback when the same child is added twice', () => {
+        const world = World.create();
+        const parentEntity = EntityBuilder.create(world).build();
+        const childEntity = EntityBuilder.create(world)
+            .with(TestChildComponent, { parent: parentEntity })
+            .build();
+
+        const childrenSet = parentEntity.get(TestParentComponent).children;
+        childrenSet.add(childEntity);
+        childrenSet.add(childEntity);
+
+        const callbacks = (childEntity as unknown as {
+            cleanupCallbacks: Array<unknown>;
+        }).cleanupCallbacks;
+        expect(callbacks.length).toBe(1);
+    });
 });
 
 const validateAngle = (angle: number) => {
