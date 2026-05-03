@@ -135,14 +135,30 @@ export class World {
     }
 
     updateRegistry(component: ComponentConstructor, entity: Entity): void {
-        /**
-         * TODO:
-         * This actually has the potential to iterate through the same query multiple times
-         * It should be possible to narrow it down so that we only check each query once?
-         */
         this.queryRegistry.get(component)?.forEach((query: Query) => {
             query.updateRegistry(entity);
         });
+    }
+
+    /**
+     * Refresh every query that cares about any of the given components, exactly
+     * once per query. Used by EntityBuilder.build so that queries spanning
+     * multiple just-added components don't get re-checked per component.
+     */
+    refreshQueriesForEntity(
+        entity: Entity,
+        components: ComponentConstructor[]
+    ): void {
+        const seen = new Set<Query>();
+        for (const c of components) {
+            const queries = this.queryRegistry.get(c);
+            if (!queries) continue;
+            for (const q of queries) {
+                if (seen.has(q)) continue;
+                seen.add(q);
+                q.updateRegistry(entity);
+            }
+        }
     }
 
     spawnEntity(opts?: EntityOpts): EntityBuilder {

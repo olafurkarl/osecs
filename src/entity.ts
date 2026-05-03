@@ -59,6 +59,20 @@ export class Entity {
         component: { new (): T },
         args?: ComponentArgs<T>
     ): void {
+        this._addComponent(component, args);
+        this.world.updateRegistry(component, this);
+    }
+
+    /**
+     * Internal: add a component without notifying the world's query registry.
+     * Caller MUST follow up with World.refreshQueriesForEntity (or addComponent
+     * for a single component) so queries see the new state. Used by
+     * EntityBuilder.build to dedupe per-query work across many components.
+     */
+    _addComponent<T extends Component>(
+        component: { new (): T },
+        args?: ComponentArgs<T>
+    ): void {
         const componentInstance = new component();
         componentInstance.setEntity(this);
         const fieldMap = Component.ComponentFieldMap.get(component);
@@ -68,8 +82,6 @@ export class Entity {
 
         this.components.set(component, componentInstance);
         this._componentMask.flipOn(componentInstance.componentId - 1);
-
-        this.world.updateRegistry(component, this);
     }
 
     /**
@@ -292,10 +304,14 @@ export class EntityBuilder implements IEntityBuilder {
         const entity = new Entity(this.world, this.opts);
         this.componentRecipes.forEach(({ constructor, args }) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            entity.addComponent<any>(constructor, args);
+            entity._addComponent<any>(constructor, args);
         });
 
         this.world.mapEntity(entity);
+        this.world.refreshQueriesForEntity(
+            entity,
+            this.componentRecipes.map((r) => r.constructor as ComponentConstructor)
+        );
         return entity;
     }
 }
