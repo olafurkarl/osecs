@@ -104,12 +104,15 @@ export class Query {
         if (this._includeMask.empty) {
             this._includeMask.flipAllToOne();
         }
+    }
 
-        if (!this._includeMask.enabled && this._excludeMask.enabled) {
-            throw new Error(
-                'Query with only Without aspects not supported, add an inclusive aspect to the query.'
-            );
-        }
+    /**
+     * True for queries built only from Without aspects (no Has). The world
+     * needs to route entity changes to these queries via a separate path,
+     * because they don't appear in queryRegistry under any component.
+     */
+    get hasOnlyExclusiveAspects(): boolean {
+        return !this._includeMask.enabled && this._excludeMask.enabled;
     }
 
     checkIncludeMask = (entity: Entity): boolean =>
