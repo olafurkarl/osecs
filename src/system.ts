@@ -1,5 +1,4 @@
 import { World } from './world';
-import { v4 as uuidv4 } from 'uuid';
 import { Aspect } from './aspect';
 import { ComponentConstructor } from './component';
 import { Query } from './query';
@@ -7,6 +6,10 @@ import { EntityBuilder } from '.';
 import { EntityOpts } from './entity';
 
 export type SystemId = string;
+
+let nextSystemSerial = 0;
+const generateSystemId = (): SystemId => `s${nextSystemSerial++}`;
+
 export abstract class System {
     public order?: number;
     public id: SystemId;
@@ -14,7 +17,7 @@ export abstract class System {
     private _queries: Query[] = [];
 
     constructor() {
-        this.id = uuidv4();
+        this.id = generateSystemId();
     }
 
     initialize() {

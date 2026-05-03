@@ -1,10 +1,12 @@
 import { Aspect, HasAspect, WithoutAspect } from './aspect';
 import { Component, ComponentConstructor } from './component';
 import { Entity, EntityId } from './entity';
-import { v4 as uuidv4 } from 'uuid';
 import { Mask } from './mask';
 
 export type QueryId = string;
+
+let nextQuerySerial = 0;
+const generateQueryId = (): QueryId => `q${nextQuerySerial++}`;
 
 type ChangeSet = {
     added: Array<Entity>;
@@ -19,13 +21,11 @@ export class Query {
     private declare _includeMask: Mask;
     private declare _excludeMask: Mask;
 
-    private _entities: Map<EntityId, Entity>;
     /**
-     * Flat array mirror of _entities for fast iteration. Deletions tombstone
-     * the slot (set to null) and `compact` repacks during flushQuery, so
-     * iteration order matches Map's insertion order and the array stays
-     * stable across concurrent removals (e.g. an entity destroying itself
-     * mid-forEach).
+     * Flat array of entities matched by this query. Deletions tombstone the
+     * slot (set to null) and `compact` repacks during flushQuery, so iteration
+     * order is stable insertion order and the array tolerates concurrent
+     * removals (e.g. an entity destroying itself mid-forEach).
      */
     private _entityList: Array<Entity | null> = [];
     private _entityListIndex: Map<EntityId, number> = new Map();
@@ -64,8 +64,7 @@ export class Query {
     constructor(aspects: Aspect[]) {
         this._aspects = aspects;
         this.initializeMasks();
-        this._entities = new Map<string, Entity>();
-        this.id = uuidv4();
+        this.id = generateQueryId();
     }
 
     get nextChangeSetIndex(): 0 | 1 {
@@ -108,8 +107,20 @@ export class Query {
         return this._excludeMask;
     }
 
-    get entities(): Map<string, Entity> {
-        return this._entities;
+    /**
+     * Snapshot of currently-matched entities as a Map. Built on demand from
+     * the internal flat list — held only for backward compat with consumers
+     * that want Map iteration; prefer `current` (Array) or `forEach` for hot
+     * paths.
+     */
+    get entities(): Map<EntityId, Entity> {
+        const map = new Map<EntityId, Entity>();
+        const list = this._entityList;
+        for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            if (e !== null) map.set(e.id, e);
+        }
+        return map;
     }
 
     initializeMasks(): void {
@@ -161,7 +172,7 @@ export class Query {
      * @returns whether the entity is in the query's entity list
      */
     hasEntity(entity: Entity): boolean {
-        return this._entities.has(entity.id);
+        return this._entityListIndex.has(entity.id);
     }
 
     /**
@@ -172,7 +183,6 @@ export class Query {
         this.nextAdded.push(entity);
 
         if (!this.hasEntity(entity)) {
-            this._entities.set(entity.id, entity);
             this._entityListIndex.set(entity.id, this._entityList.length);
             this._entityList.push(entity);
             if (this._boundComponentArrays !== null) {
@@ -193,18 +203,16 @@ export class Query {
      */
     unregisterEntity(entity: Entity): void {
         this.nextRemoved.push(entity);
-        if (this._entities.delete(entity.id)) {
-            const idx = this._entityListIndex.get(entity.id);
-            if (idx !== undefined) {
-                this._entityList[idx] = null;
-                if (this._boundComponentArrays !== null) {
-                    for (const arr of this._boundComponentArrays) {
-                        arr[idx] = null;
-                    }
+        const idx = this._entityListIndex.get(entity.id);
+        if (idx !== undefined) {
+            this._entityList[idx] = null;
+            if (this._boundComponentArrays !== null) {
+                for (const arr of this._boundComponentArrays) {
+                    arr[idx] = null;
                 }
-                this._entityListIndex.delete(entity.id);
-                this._holes++;
             }
+            this._entityListIndex.delete(entity.id);
+            this._holes++;
         }
         entity.unregisterQuery(this);
     }
