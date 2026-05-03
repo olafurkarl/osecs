@@ -44,6 +44,15 @@ test('entity id is freed for reuse after destroy + purge', () => {
     expect(world.getEntityById('reusable')).toBeDefined();
 });
 
+test('removeComponent returns true on remove, false when not present', () => {
+    const world = World.create();
+    const entity = world.spawnEntity().with(ATestComponent).build();
+
+    expect(entity.removeComponent(ATestComponent)).toBe(true);
+    expect(entity.removeComponent(ATestComponent)).toBe(false);
+    expect(entity.hasComponent(ATestComponent)).toBe(false);
+});
+
 test('destroyed entity remains resolvable until purge completes', () => {
     const world = World.create();
 

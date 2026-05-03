@@ -175,23 +175,21 @@ export class Entity {
      */
     remove<T extends { new (...args: never): Component }>(
         componentClass: T
-    ): void {
-        this.removeComponent(componentClass);
+    ): boolean {
+        return this.removeComponent(componentClass);
     }
 
     /**
-     * Removes a component from entity by class
+     * Removes a component from entity by class. Returns true if the component
+     * was present and removed, false if the entity did not have it.
      * @param componentClass Component class to remove
      */
     removeComponent<T extends { new (...args: never): Component }>(
         componentClass: T
-    ): void {
+    ): boolean {
         const ctor = componentClass as unknown as ComponentConstructor;
         if (!this.components.has(ctor)) {
-            console.log(
-                `${this.name} tried to remove ${componentClass.name} but did not have it.`
-            );
-            return;
+            return false;
         }
 
         const id = Component.ComponentIdMap.get(ctor);
@@ -203,22 +201,20 @@ export class Entity {
         this.components.delete(ctor);
 
         this.world.updateRegistry(ctor, this);
+        return true;
     }
 
     /**
      * @deprecated Class names may be mangled by minifiers/obfuscators.
      * Use {@link removeComponent} with a class reference instead.
      */
-    removeComponentByName(componentName: ComponentName): void {
+    removeComponentByName(componentName: ComponentName): boolean {
         for (const ctor of this.components.keys()) {
             if (ctor.name === componentName) {
-                this.removeComponent(ctor);
-                return;
+                return this.removeComponent(ctor);
             }
         }
-        console.log(
-            `${this.name} tried to remove ${componentName} but did not have it.`
-        );
+        return false;
     }
 
     /**
