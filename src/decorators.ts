@@ -90,12 +90,13 @@ export function children(
             };
             class ExtendedSet extends Set<Entity> {
                 public add(val: Entity) {
+                    if (super.has(val)) {
+                        return this;
+                    }
                     super.add(val);
                     addCleanupCallback(val);
                     return this;
                 }
-
-                // todo, clean up existing cleanup callback
             }
 
             const extendedSet = new ExtendedSet(childrenVal);
