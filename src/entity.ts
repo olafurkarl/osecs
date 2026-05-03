@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { v4 as uuidv4 } from 'uuid';
-import { Component, ComponentArgs, ComponentName } from './component';
+import {
+    Component,
+    ComponentArgs,
+    ComponentConstructor,
+    ComponentName
+} from './component';
 import { Mask } from './mask';
 import { Query, QueryId } from './query';
 import { World } from './world';
@@ -37,13 +42,13 @@ export class Entity {
     private _componentMask: Mask;
     private cleanupCallbacks: { (entity: Entity): void }[] = [];
 
-    private components: Map<ComponentName, Component>;
+    private components: Map<ComponentConstructor, Component>;
     private currentQueries = new Map<QueryId, Query>();
 
     constructor(world: World, opts?: EntityOpts) {
         this.id = opts?.id ?? uuidv4().split('-')[0];
         this.name = opts?.name ?? 'unnamed';
-        this.components = new Map<ComponentName, Component>();
+        this.components = new Map();
         this.world = world;
         this._componentMask = new Mask();
     }
@@ -54,14 +59,15 @@ export class Entity {
     ): void {
         const componentInstance = new component();
         componentInstance.setEntity(this);
-        if (Component.ComponentFieldMap[component.name]?.size > 0 && args) {
+        const fieldMap = Component.ComponentFieldMap.get(component);
+        if (fieldMap && fieldMap.size > 0 && args) {
             componentInstance.setValues(args);
         }
 
-        this.components.set(component.name, componentInstance);
+        this.components.set(component, componentInstance);
         this._componentMask.flipOn(componentInstance.componentId - 1);
 
-        this.world.updateRegistry(componentInstance.constructor.name, this);
+        this.world.updateRegistry(component, this);
     }
 
     /**
@@ -86,7 +92,7 @@ export class Entity {
         if (!this.hasComponent(component)) {
             this.addComponent(component, args);
         } else {
-            this.components.get(component.name)?.setValues(args ?? {});
+            this.components.get(component)?.setValues(args ?? {});
         }
     }
 
@@ -107,17 +113,19 @@ export class Entity {
     getComponent<T extends { new (...args: never): Component }>(
         componentClass: T | Component
     ): InstanceType<T> {
-        if (componentClass instanceof Component) {
-            return this.components.get(
-                componentClass.constructor.name
-            ) as InstanceType<T>;
-        }
-
-        return this.components.get(componentClass.name) as InstanceType<T>;
+        const key =
+            componentClass instanceof Component
+                ? (componentClass.constructor as ComponentConstructor)
+                : (componentClass as unknown as ComponentConstructor);
+        return this.components.get(key) as InstanceType<T>;
     }
 
+    /**
+     * @deprecated Class names may be mangled by minifiers/obfuscators.
+     * Iterate components directly or work with class references instead.
+     */
     getComponentNames(): ComponentName[] {
-        return Array.from(this.components.keys());
+        return Array.from(this.components.keys()).map((c) => c.name);
     }
 
     get componentMask(): Mask {
@@ -141,11 +149,11 @@ export class Entity {
     hasComponent<T extends { new (...args: never): Component }>(
         componentClass: T | Component
     ): boolean {
-        if (componentClass instanceof Component) {
-            return this.components.has(componentClass.constructor.name);
-        }
-
-        return this.components.has(componentClass.name);
+        const key =
+            componentClass instanceof Component
+                ? (componentClass.constructor as ComponentConstructor)
+                : (componentClass as unknown as ComponentConstructor);
+        return this.components.has(key);
     }
 
     /**
@@ -164,24 +172,39 @@ export class Entity {
     removeComponent<T extends { new (...args: never): Component }>(
         componentClass: T
     ): void {
-        this.removeComponentByName(componentClass.name);
+        const ctor = componentClass as unknown as ComponentConstructor;
+        if (!this.components.has(ctor)) {
+            console.log(
+                `${this.name} tried to remove ${componentClass.name} but did not have it.`
+            );
+            return;
+        }
+
+        const id = Component.ComponentIdMap.get(ctor);
+        if (id !== undefined) {
+            this._componentMask.flipOff(id - 1);
+        }
+
+        this.components.get(ctor)?.onComponentRemoved();
+        this.components.delete(ctor);
+
+        this.world.updateRegistry(ctor, this);
     }
 
+    /**
+     * @deprecated Class names may be mangled by minifiers/obfuscators.
+     * Use {@link removeComponent} with a class reference instead.
+     */
     removeComponentByName(componentName: ComponentName): void {
-        if (this.components.has(componentName)) {
-            this._componentMask.flipOff(
-                Component.ComponentIdMap[componentName] - 1
-            );
-
-            this.components.get(componentName)?.onComponentRemoved();
-            this.components.delete(componentName);
-
-            this.world.updateRegistry(componentName, this);
-        } else {
-            console.log(
-                `${this.name} tried to remove ${componentName} but did not have it.`
-            );
+        for (const ctor of this.components.keys()) {
+            if (ctor.name === componentName) {
+                this.removeComponent(ctor);
+                return;
+            }
         }
+        console.log(
+            `${this.name} tried to remove ${componentName} but did not have it.`
+        );
     }
 
     /**
@@ -215,8 +238,10 @@ export class Entity {
     }
 
     purge(): void {
-        this.components.forEach((c) => {
-            this.removeComponentByName(c.constructor.name);
+        // Snapshot keys to avoid mutating during iteration.
+        const ctors = Array.from(this.components.keys());
+        ctors.forEach((ctor) => {
+            this.removeComponent(ctor);
         });
 
         this.cleanupCallbacks.forEach((cb) => {

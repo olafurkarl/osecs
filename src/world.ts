@@ -1,17 +1,16 @@
 import { System } from './system';
 import { Entity, EntityBuilder, EntityId, EntityOpts } from './entity';
 import { Query } from './query';
+import { ComponentConstructor } from './component';
 
 export type SystemAndProps<T extends { new (...args: unknown[]): System }> = {
     system: T;
     props: ConstructorParameters<T>;
 };
 
-type ComponentName = string;
-
 export class World {
     private systems: System[] = [];
-    private queryRegistry: Map<ComponentName, Query[]> = new Map();
+    private queryRegistry: Map<ComponentConstructor, Query[]> = new Map();
     private allQueries: Array<Query> = [];
     private entities: Map<EntityId, Entity> = new Map();
     private deadEntities: Array<Entity> = [];
@@ -46,9 +45,9 @@ export class World {
      * in order to reduce the amount of iterations when updating entity lists
      */
     addToQueryRegistry(
-        key: ComponentName,
+        key: ComponentConstructor,
         query: Query,
-        registry: Map<ComponentName, Query[]>
+        registry: Map<ComponentConstructor, Query[]>
     ): void {
         if (!registry.has(key)) {
             registry.set(key, [query]);
@@ -62,7 +61,7 @@ export class World {
             const aspects = query.aspects;
             aspects.forEach((a) => {
                 this.addToQueryRegistry(
-                    a.componentName,
+                    a.component,
                     query,
                     this.queryRegistry
                 );
@@ -135,13 +134,13 @@ export class World {
         this.entities.set(entity.id, entity);
     }
 
-    updateRegistry(componentName: string, entity: Entity): void {
+    updateRegistry(component: ComponentConstructor, entity: Entity): void {
         /**
          * TODO:
          * This actually has the potential to iterate through the same query multiple times
          * It should be possible to narrow it down so that we only check each query once?
          */
-        this.queryRegistry.get(componentName)?.forEach((query: Query) => {
+        this.queryRegistry.get(component)?.forEach((query: Query) => {
             query.updateRegistry(entity);
         });
     }
@@ -167,10 +166,10 @@ export class World {
      * Used for testing
      */
     getSystem<T extends { new (...args: never): System }>(
-        componentClass: T
+        systemClass: T
     ): InstanceType<T> {
-        return this.systems.filter(
-            (s) => s.constructor.name === componentClass.name
-        )[0] as InstanceType<T>;
+        return this.systems.find(
+            (s) => s instanceof systemClass
+        ) as InstanceType<T>;
     }
 }

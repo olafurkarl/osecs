@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, ComponentField } from './component';
+import { Component, ComponentConstructor, ComponentField } from './component';
 import { Entity } from './entity';
 
 /**
@@ -167,11 +167,12 @@ export function parent<
                 }
 
                 // cleans up this reference if component is removed
-                const componentName = this.constructor.name;
+                const componentClass = this
+                    .constructor as ComponentConstructor;
                 newParent.addCleanupCallback(() => {
                     if (thisEntity.has(this)) {
                         // entity property has been removed from component, we remove the component
-                        thisEntity.removeComponentByName(componentName);
+                        thisEntity.removeComponent(componentClass);
                     }
                 });
             }

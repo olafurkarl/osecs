@@ -8,37 +8,42 @@ export type ComponentField = {
     fieldName: string;
     defaultValue?: unknown;
 };
+
 /**
  * Component that can be attached to entities.
  */
 export abstract class Component {
-    // Map to get component prototype id by component name
-    static ComponentIdMap: Record<ComponentName, ComponentId> = {};
+    /**
+     * Bitflag id assigned to a component class at registration time.
+     * Keyed by the class reference itself, not by class name, so the ECS
+     * survives identifier mangling by minifiers and obfuscators.
+     */
+    static ComponentIdMap: Map<ComponentConstructor, ComponentId> = new Map();
 
-    // Map to keep a record of all fields registered with decorators
-    static ComponentFieldMap: Record<
-        ComponentName,
+    static ComponentFieldMap: Map<
+        ComponentConstructor,
         Map<string, ComponentField>
-    > = {};
+    > = new Map();
 
-    static ComponentFieldInitializeMap: Record<
-        ComponentName,
+    static ComponentFieldInitializeMap: Map<
+        ComponentConstructor,
         Map<string, Array<string>>
-    > = {};
+    > = new Map();
 
-    // Higher current component prototype id
     static maxId = 0;
 
-    // Prototype id for this component class, set in decorator.
     declare componentId: ComponentId;
 
-    // Entity that this component is attached to
     private declare entity: Entity;
 
     setValues(values: Record<string, any>): void {
-        const fields = Component.ComponentFieldMap[this.constructor.name];
-        const initializers =
-            Component.ComponentFieldInitializeMap[this.constructor.name];
+        const ctor = this.constructor as ComponentConstructor;
+        const fields = Component.ComponentFieldMap.get(ctor);
+        const initializers = Component.ComponentFieldInitializeMap.get(ctor);
+
+        if (!fields) {
+            return;
+        }
 
         fields.forEach(({ fieldName }) => {
             if (typeof values[fieldName] === 'undefined') {
@@ -48,9 +53,6 @@ export abstract class Component {
             } else {
                 (this as any)[fieldName] = values[fieldName];
 
-                /**
-                 * Initialize fields marked with `initializeAs`
-                 */
                 if (initializers && initializers.has(fieldName)) {
                     initializers.get(fieldName)?.forEach((otherField) => {
                         (this as any)[otherField] = values[fieldName];
@@ -87,8 +89,6 @@ type NonFunctionPropertyNames<T> = {
 }[keyof T];
 
 export type ComponentArgs<C> = {
-    // Get all members of template component type, but exclude all parent properties
-    // as well as functions.
     [Property in Exclude<
         NonFunctionPropertyNames<C>,
         keyof Component
@@ -111,42 +111,38 @@ export function RegisterComponent<T extends ComponentConstructor>(
     const newComponentId = Component.maxId;
     registerComponent(value, newComponentId);
 
-    // Process pending field registrations from member decorators
-    const className = value.name;
     const fields = pendingFields.splice(0);
-    for (const f of fields) {
-        Component.ComponentFieldMap[className].set(f.fieldName, f);
+    const fieldMap = Component.ComponentFieldMap.get(value);
+    if (fieldMap) {
+        for (const f of fields) {
+            fieldMap.set(f.fieldName, f);
+        }
     }
 
-    // Process pending initializer mappings from @initializeAs
     const initializers = pendingInitializers.splice(0);
     if (initializers.length > 0) {
-        if (!Component.ComponentFieldInitializeMap[className]) {
-            Component.ComponentFieldInitializeMap[className] = new Map();
+        let initMap = Component.ComponentFieldInitializeMap.get(value);
+        if (!initMap) {
+            initMap = new Map();
+            Component.ComponentFieldInitializeMap.set(value, initMap);
         }
         for (const init of initializers) {
-            if (
-                !Component.ComponentFieldInitializeMap[className].has(
-                    init.initFrom
-                )
-            ) {
-                Component.ComponentFieldInitializeMap[className].set(
-                    init.initFrom,
-                    []
-                );
+            if (!initMap.has(init.initFrom)) {
+                initMap.set(init.initFrom, []);
             }
-            Component.ComponentFieldInitializeMap[className]
-                .get(init.initFrom)
-                ?.push(init.field);
+            initMap.get(init.initFrom)?.push(init.field);
         }
     }
 }
 
-const registerComponent = (constructor: any, newComponentId: number) => {
+const registerComponent = (
+    constructor: ComponentConstructor,
+    newComponentId: number
+) => {
     constructor.prototype.componentId = newComponentId;
-    Component.ComponentIdMap[constructor.name] = newComponentId;
+    Component.ComponentIdMap.set(constructor, newComponentId);
 
-    if (!Component.ComponentFieldMap[constructor.name]) {
-        Component.ComponentFieldMap[constructor.name] = new Map();
+    if (!Component.ComponentFieldMap.has(constructor)) {
+        Component.ComponentFieldMap.set(constructor, new Map());
     }
-}
+};

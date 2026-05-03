@@ -1,12 +1,13 @@
-import { Component } from './component';
+import { Component, ComponentConstructor } from './component';
 
 export class Aspect {
     public bitFlag: number;
-    public componentName: string;
+    public component: ComponentConstructor;
 
     constructor(component: { new (...args: never): Component }) {
-        this.componentName = component.name;
-        this.bitFlag = Component.ComponentIdMap[component.name] - 1;
+        this.component = component as unknown as ComponentConstructor;
+        const id = Component.ComponentIdMap.get(this.component);
+        this.bitFlag = (id ?? 0) - 1;
     }
 }
 
