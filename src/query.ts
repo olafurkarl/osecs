@@ -1,12 +1,10 @@
 import { Aspect, HasAspect, WithoutAspect } from './aspect';
 import { Component, ComponentConstructor } from './component';
 import { Entity, EntityId } from './entity';
+import { v4 as uuidv4 } from 'uuid';
 import { Mask } from './mask';
 
 export type QueryId = string;
-
-let nextQuerySerial = 0;
-const generateQueryId = (): QueryId => `q${nextQuerySerial++}`;
 
 type ChangeSet = {
     added: Array<Entity>;
@@ -64,7 +62,7 @@ export class Query {
     constructor(aspects: Aspect[]) {
         this._aspects = aspects;
         this.initializeMasks();
-        this.id = generateQueryId();
+        this.id = uuidv4();
     }
 
     get nextChangeSetIndex(): 0 | 1 {
