@@ -19,6 +19,23 @@ export class Query {
     private declare _excludeMask: Mask;
 
     private _entities: Map<EntityId, Entity>;
+    /**
+     * Flat array mirror of _entities for fast iteration. Deletions tombstone
+     * the slot (set to null) and `compact` repacks during flushQuery, so
+     * iteration order matches Map's insertion order and the array stays
+     * stable across concurrent removals (e.g. an entity destroying itself
+     * mid-forEach).
+     */
+    private _entityList: Array<Entity | null> = [];
+    private _entityListIndex: Map<EntityId, number> = new Map();
+    private _holes = 0;
+
+    /**
+     * Used by World.refreshQueriesForEntity to dedupe per-entity work without
+     * allocating a Set on every entity build. World stamps a fresh tick into
+     * this field; queries skip themselves when stamped.
+     */
+    public _visitedTick = -1;
 
     private currentChangeSet: 0 | 1 = 0;
     private changeSets: [ChangeSet, ChangeSet] = [
@@ -61,7 +78,10 @@ export class Query {
     }
 
     get current() {
-        return Array.from(this._entities.values());
+        if (this._holes === 0) return this._entityList.slice() as Entity[];
+        const out: Entity[] = [];
+        for (const e of this._entityList) if (e !== null) out.push(e);
+        return out;
     }
 
     get aspects() {
@@ -141,6 +161,8 @@ export class Query {
 
         if (!this.hasEntity(entity)) {
             this._entities.set(entity.id, entity);
+            this._entityListIndex.set(entity.id, this._entityList.length);
+            this._entityList.push(entity);
             entity.registerQuery(this);
         }
     }
@@ -151,7 +173,14 @@ export class Query {
      */
     unregisterEntity(entity: Entity): void {
         this.nextRemoved.push(entity);
-        this._entities.delete(entity.id);
+        if (this._entities.delete(entity.id)) {
+            const idx = this._entityListIndex.get(entity.id);
+            if (idx !== undefined) {
+                this._entityList[idx] = null;
+                this._entityListIndex.delete(entity.id);
+                this._holes++;
+            }
+        }
         entity.unregisterQuery(this);
     }
 
@@ -172,21 +201,44 @@ export class Query {
     };
 
     /**
-     * Just for convenience / syntactic sugar
+     * Iterate the entities currently matching this query. Re-reads list length
+     * each iteration so entities registered mid-forEach are visited (matching
+     * Map.forEach semantics); tombstoned slots from concurrent removals are
+     * skipped.
      */
-    forEach(
-        callbackfn: (
-            value: Entity,
-            key: string,
-            map: Map<string, Entity>
-        ) => void
-    ) {
-        this._entities.forEach(callbackfn);
+    forEach(callbackfn: (entity: Entity) => void) {
+        const list = this._entityList;
+        for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            if (e !== null) callbackfn(e);
+        }
+    }
+
+    /**
+     * Repack _entityList in place so tombstoned slots don't accumulate. Called
+     * from flushQuery — at most once per world tick — keeping per-iteration
+     * null-check overhead bounded.
+     */
+    private compact() {
+        const list = this._entityList;
+        let write = 0;
+        for (let read = 0; read < list.length; read++) {
+            const e = list[read];
+            if (e === null) continue;
+            if (write !== read) {
+                list[write] = e;
+                this._entityListIndex.set(e.id, write);
+            }
+            write++;
+        }
+        list.length = write;
+        this._holes = 0;
     }
 
     flushQuery = () => {
         this.currentChangeSet = this.nextChangeSetIndex;
         this.nextAdded.length = 0;
         this.nextRemoved.length = 0;
+        if (this._holes > 0) this.compact();
     };
 }

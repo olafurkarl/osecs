@@ -18,6 +18,12 @@ export class World {
      * on every entity-component change.
      */
     private exclusiveOnlyQueries: Array<Query> = [];
+    /**
+     * Monotonic tick stamped onto Query._visitedTick during
+     * refreshQueriesForEntity. Lets us dedupe per-entity work across multiple
+     * components without allocating a Set per build.
+     */
+    private _refreshTick = 0;
     private entities: Map<EntityId, Entity> = new Map();
     private deadEntities: Array<Entity> = [];
     private entitiesToBePurged: Array<Entity> = [];
@@ -162,19 +168,19 @@ export class World {
         entity: Entity,
         components: ComponentConstructor[]
     ): void {
-        const seen = new Set<Query>();
+        const tick = ++this._refreshTick;
         for (const c of components) {
             const queries = this.queryRegistry.get(c);
             if (!queries) continue;
             for (const q of queries) {
-                if (seen.has(q)) continue;
-                seen.add(q);
+                if (q._visitedTick === tick) continue;
+                q._visitedTick = tick;
                 q.updateRegistry(entity);
             }
         }
         for (const q of this.exclusiveOnlyQueries) {
-            if (seen.has(q)) continue;
-            seen.add(q);
+            if (q._visitedTick === tick) continue;
+            q._visitedTick = tick;
             q.updateRegistry(entity);
         }
     }
