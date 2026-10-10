@@ -6,7 +6,7 @@ import {
     ComponentName
 } from './component';
 import { Mask } from './mask';
-import { Query, QueryId } from './query';
+import { Query } from './query';
 import { World } from './world';
 
 export type EntityId = string;
@@ -45,7 +45,7 @@ export class Entity {
     private cleanupCallbacks: { (entity: Entity): void }[] = [];
 
     private components: Map<ComponentConstructor, Component>;
-    private currentQueries = new Map<QueryId, Query>();
+    private currentQueries = new Set<Query>();
 
     constructor(world: World, opts?: EntityOpts) {
         this.id = opts?.id ?? generateEntityId();
@@ -188,6 +188,19 @@ export class Entity {
         componentClass: T
     ): boolean {
         const ctor = componentClass as unknown as ComponentConstructor;
+        if (!this._removeComponent(ctor)) {
+            return false;
+        }
+        this.world.updateRegistry(ctor, this);
+        return true;
+    }
+
+    /**
+     * Internal: remove a component without notifying the world's query
+     * registry. Used by purge, where destroy has already unregistered the
+     * entity from every query.
+     */
+    _removeComponent(ctor: ComponentConstructor): boolean {
         if (!this.components.has(ctor)) {
             return false;
         }
@@ -199,8 +212,6 @@ export class Entity {
 
         this.components.get(ctor)?.onComponentRemoved();
         this.components.delete(ctor);
-
-        this.world.updateRegistry(ctor, this);
         return true;
     }
 
@@ -225,11 +236,11 @@ export class Entity {
     }
 
     registerQuery(query: Query): void {
-        this.currentQueries.set(query.id, query);
+        this.currentQueries.add(query);
     }
 
     unregisterQuery(query: Query): void {
-        this.currentQueries.delete(query.id);
+        this.currentQueries.delete(query);
     }
 
     addCleanupCallback(callback: (entity: Entity) => void): void {
@@ -250,8 +261,16 @@ export class Entity {
     purge(): void {
         // Snapshot keys to avoid mutating during iteration.
         const ctors = Array.from(this.components.keys());
+        // A destroyed entity was already unregistered from every query, so
+        // skip the per-component registry updates. A live entity purged
+        // directly still needs them.
+        const notifyQueries = this.alive;
         ctors.forEach((ctor) => {
-            this.removeComponent(ctor);
+            if (notifyQueries) {
+                this.removeComponent(ctor);
+            } else {
+                this._removeComponent(ctor);
+            }
         });
 
         this.cleanupCallbacks.forEach((cb) => {

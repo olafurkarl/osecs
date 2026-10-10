@@ -26,7 +26,7 @@ export class Query {
      * removals (e.g. an entity destroying itself mid-forEach).
      */
     private _entityList: Array<Entity | null> = [];
-    private _entityListIndex: Map<EntityId, number> = new Map();
+    private _entityListIndex: Map<Entity, number> = new Map();
     private _holes = 0;
 
     /**
@@ -170,7 +170,7 @@ export class Query {
      * @returns whether the entity is in the query's entity list
      */
     hasEntity(entity: Entity): boolean {
-        return this._entityListIndex.has(entity.id);
+        return this._entityListIndex.has(entity);
     }
 
     /**
@@ -181,7 +181,7 @@ export class Query {
         this.nextAdded.push(entity);
 
         if (!this.hasEntity(entity)) {
-            this._entityListIndex.set(entity.id, this._entityList.length);
+            this._entityListIndex.set(entity, this._entityList.length);
             this._entityList.push(entity);
             if (this._boundComponentArrays !== null) {
                 const ctors = this._boundComponents!;
@@ -201,7 +201,7 @@ export class Query {
      */
     unregisterEntity(entity: Entity): void {
         this.nextRemoved.push(entity);
-        const idx = this._entityListIndex.get(entity.id);
+        const idx = this._entityListIndex.get(entity);
         if (idx !== undefined) {
             this._entityList[idx] = null;
             if (this._boundComponentArrays !== null) {
@@ -209,7 +209,7 @@ export class Query {
                     arr[idx] = null;
                 }
             }
-            this._entityListIndex.delete(entity.id);
+            this._entityListIndex.delete(entity);
             this._holes++;
         }
         entity.unregisterQuery(this);
@@ -222,6 +222,12 @@ export class Query {
     }
 
     updateRegistry = (entity: Entity) => {
+        if (!entity.alive) {
+            // Destroyed entities are unregistered in Entity.destroy and must
+            // not come back, even if a later component change matches.
+            if (this.hasEntity(entity)) this.unregisterEntity(entity);
+            return;
+        }
         const registerThisEntity = this.shouldRegisterEntity(entity);
 
         if (this.hasEntity(entity) && !registerThisEntity) {
@@ -259,7 +265,7 @@ export class Query {
             if (e === null) continue;
             if (write !== read) {
                 list[write] = e;
-                this._entityListIndex.set(e.id, write);
+                this._entityListIndex.set(e, write);
                 if (bound !== null) {
                     for (const arr of bound) arr[write] = arr[read];
                 }

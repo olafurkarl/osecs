@@ -151,9 +151,12 @@ export class World {
     }
 
     updateRegistry(component: ComponentConstructor, entity: Entity): void {
-        this.queryRegistry.get(component)?.forEach((query: Query) => {
-            query.updateRegistry(entity);
-        });
+        const queries = this.queryRegistry.get(component);
+        if (queries) {
+            for (const q of queries) {
+                q.updateRegistry(entity);
+            }
+        }
         for (const q of this.exclusiveOnlyQueries) {
             q.updateRegistry(entity);
         }

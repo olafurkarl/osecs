@@ -23,7 +23,10 @@ export class Mask {
     }
 
     get empty(): boolean {
-        return this._mask.every((m) => m === 0);
+        for (let i = 0; i < this._mask.length; i++) {
+            if (this._mask[i] !== 0) return false;
+        }
+        return true;
     }
 
     /**
@@ -31,70 +34,73 @@ export class Mask {
      * @param otherMask Uint32Array to be compared with this mask
      * @returns True if the provided mask is satisfied by this mask
      */
-    public fulfills = (otherMask: Mask): boolean => {
-        if (otherMask.mask.length !== this._mask.length) {
+    fulfills(otherMask: Mask): boolean {
+        const other = otherMask.mask;
+        const mine = this._mask;
+        if (other.length !== mine.length) {
             throw new Error('Comparing masks of different sizes not allowed.');
         }
-        return this._mask.every((m, index) =>
-            this.checkMask(m, otherMask.mask[index])
-        );
-    };
+        for (let i = 0; i < mine.length; i++) {
+            if (!this.checkMask(mine[i], other[i])) return false;
+        }
+        return true;
+    }
 
     /**
      * Checks another mask to see it contains all flags in this mask
      * @param otherMask Uint32Array to be compared with this mask
      * @returns True if the provided mask is satisfied by this mask
      */
-    public fulfilledBy = (otherMask: Mask): boolean => {
-        if (otherMask.mask.length !== this._mask.length) {
+    fulfilledBy(otherMask: Mask): boolean {
+        const other = otherMask.mask;
+        const mine = this._mask;
+        if (other.length !== mine.length) {
             throw new Error('Comparing masks of different sizes not allowed.');
         }
-        return this._mask.every((m, index) =>
-            this.checkMask(otherMask.mask[index], m)
-        );
-    };
+        for (let i = 0; i < mine.length; i++) {
+            if (!this.checkMask(other[i], mine[i])) return false;
+        }
+        return true;
+    }
 
     /**
      * @param checkingMask The mask that needs to be met to fulfill the condition
      * @param requiredMask The other mask that needs to match up with the first mask
      * @returns Whether the masks match or not
      */
-    private checkMask = (
-        checkingMask: number,
-        requiredMask: number
-    ): boolean => {
+    private checkMask(checkingMask: number, requiredMask: number): boolean {
         return (
             (checkingMask & requiredMask) >>> 0 === requiredMask ||
             checkingMask === requiredMask // second condition checking if they're both 0
         );
-    };
+    }
 
     /**
      * Flips all bits in the mask to 1
      */
-    flipAllToOne = () => {
+    flipAllToOne(): void {
         this._mask.fill(~0 >>> 0);
-    };
+    }
 
     /**
      * Flip on a flag in this mask
      * @param bitPosition The bit flag to flip, typically a componentId.
      */
-    flipOn = (bitPosition: number) => {
+    flipOn(bitPosition: number): void {
         this._mask[Math.floor(bitPosition / 32)] |=
             (1 << bitPosition % 32) >>> 0;
-    };
+    }
 
     /**
      * Flip off a flag on this mask
      * @param bitPosition The bit flag to flip, typically a componentId.
      */
-    flipOff = (bitPosition: number) => {
+    flipOff(bitPosition: number): void {
         this._mask[Math.floor(bitPosition / 32)] &= ~(
             (1 << bitPosition % 32) >>>
             0
         );
-    };
+    }
 
     toString(): string {
         const decToBin = (dec: number) => {
